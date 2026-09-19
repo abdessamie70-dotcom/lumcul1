@@ -4,14 +4,18 @@ import '../models/room_model.dart';
 import '../providers/lighting_provider.dart';
 import '../utils/app_theme.dart';
 
+import '../providers/cable_sizing_provider.dart';
+
 class CalculationResultCard extends StatelessWidget {
   final RoomCalculation calculation;
   final VoidCallback? onAddedToProject;
+  final VoidCallback? onSwitchToCableSizing;
 
   const CalculationResultCard({
     super.key,
     required this.calculation,
     this.onAddedToProject,
+    this.onSwitchToCableSizing,
   });
 
   @override
@@ -171,6 +175,65 @@ class CalculationResultCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // قسم اقتراح السلك والقاطع الكهربائي المناسب لخط الإنارة
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentBlue.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cable_rounded, color: AppTheme.accentBlue, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'التوصيل الكهربائي المقترح لخط الإنارة:',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'مقطع السلك: ${calculation.totalWattage > 1500 ? "2.5" : "1.5"} mm² (نحاس) | قاطع: ${calculation.totalWattage > 1500 ? "16A" : "10A"} MCB | تيار الحمل: ${(calculation.totalWattage / (230 * 0.9)).toStringAsFixed(2)} A',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onSwitchToCableSizing != null) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(color: AppTheme.accentBlue.withValues(alpha: 0.5)),
+                      ),
+                      onPressed: () {
+                        context.read<CableSizingProvider>().prefillFromLighting(calculation.totalWattage);
+                        onSwitchToCableSizing?.call();
+                      },
+                      child: const Text('تفاصيل السلك ⚡', style: TextStyle(fontSize: 11)),
+                    ),
+                  ],
                 ],
               ),
             ),

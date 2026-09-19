@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'providers/cable_sizing_provider.dart';
 import 'providers/lighting_provider.dart';
 import 'screens/main_shell.dart';
 import 'utils/app_theme.dart';
@@ -8,8 +9,11 @@ import 'utils/app_theme.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => LightingProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LightingProvider()),
+        ChangeNotifierProvider(create: (_) => CableSizingProvider()),
+      ],
       child: const LightingCalculatorApp(),
     ),
   );

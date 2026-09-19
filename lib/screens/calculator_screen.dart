@@ -4,6 +4,7 @@ import '../providers/lighting_provider.dart';
 import '../models/lighting_standard.dart';
 import '../widgets/result_card.dart';
 import '../utils/app_theme.dart';
+import 'cable_sizing_screen.dart';
 
 class CalculatorScreen extends StatefulWidget {
   final VoidCallback? onNavigateToProject;
@@ -16,6 +17,8 @@ class CalculatorScreen extends StatefulWidget {
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  int _activeInterfaceIndex = 0; // 0 = حاسبة الإضاءة المنزلية, 1 = حساب مقطع السلك والكابل
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lengthController = TextEditingController();
@@ -135,11 +138,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryAmber),
-                SizedBox(width: 8),
-                Text('حاسبة الإضاءة المنزلية'),
+                Icon(
+                  _activeInterfaceIndex == 0 ? Icons.lightbulb_outline_rounded : Icons.cable_rounded,
+                  color: _activeInterfaceIndex == 0 ? AppTheme.primaryAmber : AppTheme.accentBlue,
+                ),
+                const SizedBox(width: 8),
+                Text(_activeInterfaceIndex == 0 ? 'حاسبة الإضاءة المنزلية' : 'حساب مقطع السلك والكابل'),
               ],
             ),
             Padding(
@@ -165,227 +171,278 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             tooltip: 'تبديل المظهر',
             onPressed: () => provider.toggleTheme(),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'إعادة ضبط الحقول',
-            onPressed: _resetForm,
-          ),
+          if (_activeInterfaceIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'إعادة ضبط الحقول',
+              onPressed: _resetForm,
+            ),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // بنر ترحيبي توضيحي
-                    _buildIntroBanner(context),
-                    const SizedBox(height: 16),
-
-                    // قسم 1: بيانات الغرفة
-                    _buildSectionHeader(
-                      context,
-                      title: '1. بيانات الغرفة والأبعاد',
-                      icon: Icons.meeting_room_outlined,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // اختيار الغرفة
-                    _buildRoomNameSelector(context),
-                    const SizedBox(height: 14),
-
-                    // أبعاد الغرفة (الطول والعرض)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _lengthController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(
-                              labelText: 'الطول (بالمتر)',
-                              hintText: 'مثال: 5.0',
-                              prefixIcon: Icon(Icons.straighten_rounded),
-                              suffixText: 'م',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'مطلوب';
-                              }
-                              final val = double.tryParse(value);
-                              if (val == null || val <= 0) {
-                                return 'قيمة غير صالحة';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _widthController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(
-                              labelText: 'العرض (بالمتر)',
-                              hintText: 'مثال: 4.0',
-                              prefixIcon: Icon(Icons.square_foot_rounded),
-                              suffixText: 'م',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'مطلوب';
-                              }
-                              final val = double.tryParse(value);
-                              if (val == null || val <= 0) {
-                                return 'قيمة غير صالحة';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // قسم 2: شدة الإضاءة المطلوبة
-                    _buildSectionHeader(
-                      context,
-                      title: '2. شدة الإضاءة المطلوبة (Lux)',
-                      icon: Icons.wb_incandescent_outlined,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // حقل شدة الإضاءة
-                    TextFormField(
-                      controller: _luxController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'شدة الإضاءة (Lux)',
-                        hintText: 'مثال: 150',
-                        prefixIcon: Icon(Icons.flash_on_rounded),
-                        suffixText: 'لوكس',
-                        helperText: 'يمكنك الاختيار السريع من المعايير الشائعة أدناه',
+        child: Column(
+          children: [
+            // شريط التبديل العلوي بين واجهة الإنارة وواجهة مقطع السلك
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 4),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 0,
+                        label: Text('حاسبة الإضاءة المنزلية'),
+                        icon: Icon(Icons.lightbulb_rounded),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'يرجى إدخال شدة الإضاءة';
-                        }
-                        final val = double.tryParse(value);
-                        if (val == null || val <= 0) {
-                          return 'قيمة غير صحيحة';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-
-                    // شرائح اختيار شدة الإضاءة السريعة
-                    _buildLuxPresetChips(),
-
-                    const SizedBox(height: 20),
-
-                    // قسم 3: مواصفات اللمبة المقترحة
-                    _buildSectionHeader(
-                      context,
-                      title: '3. خصائص اللمبة المختارة',
-                      icon: Icons.settings_suggest_outlined,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // شرائح اختيار لمبات سريعة
-                    _buildBulbPresetChips(),
-                    const SizedBox(height: 12),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _lumenController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(
-                              labelText: 'تدفق اللمبة (Lumen)',
-                              hintText: '806',
-                              prefixIcon: Icon(Icons.sunny),
-                              suffixText: 'lm',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'مطلوب';
-                              }
-                              final val = double.tryParse(value);
-                              if (val == null || val <= 0) {
-                                return 'قيمة غير صالحة';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _wattageController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(
-                              labelText: 'قدرة اللمبة (Watt)',
-                              hintText: '9',
-                              prefixIcon: Icon(Icons.electric_bolt_rounded),
-                              suffixText: 'W',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'مطلوب';
-                              }
-                              final val = double.tryParse(value);
-                              if (val == null || val <= 0) {
-                                return 'قيمة غير صالحة';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // زر الحساب الرئيسي
-                    ElevatedButton.icon(
-                      onPressed: _onCalculate,
-                      icon: const Icon(Icons.calculate_rounded, size: 22),
-                      label: const Text(
-                        'احسب الإضاءة المطلوبة',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      ButtonSegment(
+                        value: 1,
+                        label: Text('حساب مقطع السلك والكابل'),
+                        icon: Icon(Icons.cable_rounded),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 3,
-                      ),
-                    ),
-
-                    // عرض بطاقة النتائج عند إتمام الحساب
-                    if (calculation != null)
-                      CalculationResultCard(
-                        calculation: calculation,
-                        onAddedToProject: widget.onNavigateToProject,
-                      ),
-
-                    // شريط مختصر إذا كان هناك غرف مضافة في المشروع
-                    if (provider.totalRoomsCount > 0) ...[
-                      const SizedBox(height: 20),
-                      _buildProjectQuickBar(context, provider),
                     ],
-
-                    const SizedBox(height: 30),
-                  ],
+                    selected: {_activeInterfaceIndex},
+                    onSelectionChanged: (set) {
+                      setState(() {
+                        _activeInterfaceIndex = set.first;
+                      });
+                    },
+                  ),
                 ),
               ),
+            ),
+            Expanded(
+              child: _activeInterfaceIndex == 0
+                  ? _buildLightingContent(context, provider, calculation)
+                  : const CableSizingScreen(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLightingContent(
+    BuildContext context,
+    LightingProvider provider,
+    dynamic calculation,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // بنر ترحيبي توضيحي
+                _buildIntroBanner(context),
+                const SizedBox(height: 16),
+
+                // قسم 1: بيانات الغرفة
+                _buildSectionHeader(
+                  context,
+                  title: '1. بيانات الغرفة والأبعاد',
+                  icon: Icons.meeting_room_outlined,
+                ),
+                const SizedBox(height: 12),
+
+                // اختيار الغرفة
+                _buildRoomNameSelector(context),
+                const SizedBox(height: 14),
+
+                // أبعاد الغرفة (الطول والعرض)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lengthController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'الطول (بالمتر)',
+                          hintText: 'مثال: 5.0',
+                          prefixIcon: Icon(Icons.straighten_rounded),
+                          suffixText: 'م',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'مطلوب';
+                          }
+                          final val = double.tryParse(value);
+                          if (val == null || val <= 0) {
+                            return 'قيمة غير صالحة';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _widthController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'العرض (بالمتر)',
+                          hintText: 'مثال: 4.0',
+                          prefixIcon: Icon(Icons.square_foot_rounded),
+                          suffixText: 'م',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'مطلوب';
+                          }
+                          final val = double.tryParse(value);
+                          if (val == null || val <= 0) {
+                            return 'قيمة غير صالحة';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // قسم 2: شدة الإضاءة المطلوبة
+                _buildSectionHeader(
+                  context,
+                  title: '2. شدة الإضاءة المطلوبة (Lux)',
+                  icon: Icons.wb_incandescent_outlined,
+                ),
+                const SizedBox(height: 8),
+
+                // حقل شدة الإضاءة
+                TextFormField(
+                  controller: _luxController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'شدة الإضاءة (Lux)',
+                    hintText: 'مثال: 150',
+                    prefixIcon: Icon(Icons.flash_on_rounded),
+                    suffixText: 'لوكس',
+                    helperText: 'يمكنك الاختيار السريع من المعايير الشائعة أدناه',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'يرجى إدخال شدة الإضاءة';
+                    }
+                    final val = double.tryParse(value);
+                    if (val == null || val <= 0) {
+                      return 'قيمة غير صحيحة';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // شرائح اختيار شدة الإضاءة السريعة
+                _buildLuxPresetChips(),
+
+                const SizedBox(height: 20),
+
+                // قسم 3: مواصفات اللمبة المقترحة
+                _buildSectionHeader(
+                  context,
+                  title: '3. خصائص اللمبة المختارة',
+                  icon: Icons.settings_suggest_outlined,
+                ),
+                const SizedBox(height: 8),
+
+                // شرائح اختيار لمبات سريعة
+                _buildBulbPresetChips(),
+                const SizedBox(height: 12),
+
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lumenController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'تدفق اللمبة (Lumen)',
+                          hintText: '806',
+                          prefixIcon: Icon(Icons.sunny),
+                          suffixText: 'lm',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'مطلوب';
+                          }
+                          final val = double.tryParse(value);
+                          if (val == null || val <= 0) {
+                            return 'قيمة غير صالحة';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _wattageController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'قدرة اللمبة (Watt)',
+                          hintText: '9',
+                          prefixIcon: Icon(Icons.electric_bolt_rounded),
+                          suffixText: 'W',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'مطلوب';
+                          }
+                          final val = double.tryParse(value);
+                          if (val == null || val <= 0) {
+                            return 'قيمة غير صالحة';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // زر الحساب الرئيسي
+                ElevatedButton.icon(
+                  onPressed: _onCalculate,
+                  icon: const Icon(Icons.calculate_rounded, size: 22),
+                  label: const Text(
+                    'احسب الإضاءة المطلوبة',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 3,
+                  ),
+                ),
+
+                // عرض بطاقة النتائج عند إتمام الحساب
+                if (calculation != null)
+                  CalculationResultCard(
+                    calculation: calculation,
+                    onAddedToProject: widget.onNavigateToProject,
+                    onSwitchToCableSizing: () {
+                      setState(() {
+                        _activeInterfaceIndex = 1;
+                      });
+                    },
+                  ),
+
+                // شريط مختصر إذا كان هناك غرف مضافة في المشروع
+                if (provider.totalRoomsCount > 0) ...[
+                  const SizedBox(height: 20),
+                  _buildProjectQuickBar(context, provider),
+                ],
+
+                const SizedBox(height: 30),
+              ],
             ),
           ),
         ),
