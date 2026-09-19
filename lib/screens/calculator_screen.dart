@@ -131,11 +131,29 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryAmber),
-            SizedBox(width: 8),
-            Text('حاسبة الإضاءة المنزلية'),
+            const Row(
+              children: [
+                Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryAmber),
+                SizedBox(width: 8),
+                Text('حاسبة الإضاءة المنزلية'),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 32),
+              child: Text(
+                'by BOUGHABA ABDESSAMIE',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppTheme.primaryAmber : AppTheme.primaryDarkAmber,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
