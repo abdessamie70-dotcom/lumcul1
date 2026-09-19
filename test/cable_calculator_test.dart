@@ -33,6 +33,8 @@ void main() {
       expect(result.selectedCable, isNotNull);
       expect(result.selectedCable!.section, equals(25.0));
       expect(result.cableCapacity, equals(89.0));
+      // Final Cable Capacity (Iz) = Raw capacity * K = 89 * 0.87 = 77.43 A
+      expect(result.finalCableCapacityIz, closeTo(77.43, 0.05));
 
       // 6. هبوط الجهد الفعلي مع كابل 25 mm²:
       // actualDeltaV = (sqrt(3) * 85 * 76.414 * 0.85) / (56 * 25) ≈ 6.83V (1.71%)

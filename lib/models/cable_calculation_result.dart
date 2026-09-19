@@ -20,11 +20,15 @@ class CableCalculationResult {
   final double minSectionForVoltageDropMinS;
 
   final CableCapacity? selectedCable;
-  final double? cableCapacity;
+  final double? cableCapacity; // Raw capacity from table
   final double? actualDeltaVVolts;
   final double? actualDeltaVPct;
   final int? suggestedBreakerAmps;
   final bool isOverCapacity;
+
+  /// السعة النهائية للتحمل: Selected raw capacity from the table * Correction Factor (K)
+  double? get finalCableCapacityIz =>
+      cableCapacity != null ? cableCapacity! * correctionFactorK : null;
 
   CableCalculationResult._({
     required this.phase,
