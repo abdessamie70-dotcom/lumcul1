@@ -22,6 +22,8 @@ class CalculationResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final isArabic = context.watch<LightingProvider>().isArabic;
+
     return Container(
       margin: const EdgeInsets.only(top: 24, bottom: 12),
       decoration: BoxDecoration(
@@ -77,7 +79,7 @@ class CalculationResultCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'نتائج الحساب: ${calculation.name}',
+                        '${isArabic ? "نتائج الحساب" : "Results"}: ${calculation.name}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -85,7 +87,7 @@ class CalculationResultCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'الأبعاد: ${calculation.length}م × ${calculation.width}م | شدة الإضاءة: ${calculation.requiredLux.toInt()} Lux',
+                        '${isArabic ? "الأبعاد" : "Dimensions"}: ${calculation.length}${isArabic ? "م" : "m"} × ${calculation.width}${isArabic ? "م" : "m"} | ${isArabic ? "شدة الإضاءة" : "Illuminance"}: ${calculation.requiredLux.toInt()} Lux',
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -106,37 +108,37 @@ class CalculationResultCard extends StatelessWidget {
               children: [
                 _buildMetricTile(
                   context,
-                  title: 'المساحة الكلية',
+                  title: isArabic ? 'المساحة الكلية' : 'Total Area',
                   value: calculation.area.toStringAsFixed(1),
-                  unit: 'متر²',
+                  unit: isArabic ? 'متر²' : 'm²',
                   icon: Icons.square_foot_rounded,
                   color: const Color(0xFF3B82F6),
                 ),
                 _buildMetricTile(
                   context,
-                  title: 'إجمالي اللومين المطلوب',
+                  title: isArabic ? 'إجمالي اللومين المطلوب' : 'Total Required Lumens',
                   value: calculation.totalRequiredLumens.toStringAsFixed(0),
-                  unit: 'لومين (lm)',
+                  unit: isArabic ? 'لومين (lm)' : 'lm',
                   icon: Icons.wb_sunny_rounded,
                   color: const Color(0xFFF59E0B),
                   highlight: true,
                 ),
                 _buildMetricTile(
                   context,
-                  title: 'عدد اللمبات المقترح',
+                  title: isArabic ? 'عدد اللمبات المقترح' : 'Recommended Bulbs',
                   value: '${calculation.practicalBulbs}',
-                  unit: 'لمبات (عملي)',
-                  subtitle: 'العدد النظري: ${calculation.nominalBulbs.toStringAsFixed(2)}',
+                  unit: isArabic ? 'لمبات (عملي)' : 'Bulbs (practical)',
+                  subtitle: '${isArabic ? "العدد النظري:" : "Theoretical:"} ${calculation.nominalBulbs.toStringAsFixed(2)}',
                   icon: Icons.tips_and_updates_rounded,
                   color: const Color(0xFF10B981),
-                  badge: 'موصى به',
+                  badge: isArabic ? 'موصى به' : 'Recommended',
                 ),
                 _buildMetricTile(
                   context,
-                  title: 'إجمالي الاستهلاك',
+                  title: isArabic ? 'إجمالي الاستهلاك' : 'Total Power Load',
                   value: calculation.totalWattage.toStringAsFixed(0),
-                  unit: 'واط (Watt)',
-                  subtitle: 'بمعدل ${calculation.bulbWattage.toInt()}W للمبة',
+                  unit: isArabic ? 'واط (Watt)' : 'W',
+                  subtitle: '${isArabic ? "بمعدل" : "At"} ${calculation.bulbWattage.toInt()}W / ${isArabic ? "لمبة" : "bulb"}',
                   icon: Icons.bolt_rounded,
                   color: const Color(0xFFEC4899),
                 ),
@@ -167,7 +169,9 @@ class CalculationResultCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'تم اعتماد معامل الفواقد والاستخدام (×2) لضمان إضاءة فعلية كافية بعد امتصاص الجدران والأثاث.',
+                      isArabic
+                          ? 'تم اعتماد معامل الفواقد والاستخدام (×2) لضمان إضاءة فعلية كافية بعد امتصاص الجدران والأثاث.'
+                          : 'Utilization & maintenance factor (×2.0) applied to ensure adequate illuminance after surface absorption.',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.grey.shade300 : Colors.brown.shade800,
@@ -204,13 +208,13 @@ class CalculationResultCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'التوصيل الكهربائي المقترح لخط الإنارة:',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        Text(
+                          isArabic ? 'التوصيل الكهربائي المقترح لخط الإنارة:' : 'Recommended Feeder & Protection:',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'مقطع السلك: ${calculation.totalWattage > 1500 ? "2.5" : "1.5"} mm² (نحاس) | قاطع: ${calculation.totalWattage > 1500 ? "16A" : "10A"} MCB | تيار الحمل: ${(calculation.totalWattage / (230 * 0.9)).toStringAsFixed(2)} A',
+                          '${isArabic ? "مقطع السلك:" : "Wire Section:"} ${calculation.totalWattage > 1500 ? "2.5" : "1.5"} mm² (${isArabic ? "نحاس" : "Cu"}) | ${isArabic ? "قاطع:" : "MCB:"} ${calculation.totalWattage > 1500 ? "16A" : "10A"} MCB | Ib: ${(calculation.totalWattage / (230 * 0.9)).toStringAsFixed(2)} A',
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
@@ -231,7 +235,7 @@ class CalculationResultCard extends StatelessWidget {
                         context.read<CableSizingProvider>().prefillFromLighting(calculation.totalWattage);
                         onSwitchToCableSizing?.call();
                       },
-                      child: const Text('تفاصيل السلك ⚡', style: TextStyle(fontSize: 11)),
+                      child: Text(isArabic ? 'تفاصيل السلك ⚡' : 'Size Cable ⚡', style: const TextStyle(fontSize: 11)),
                     ),
                   ],
                 ],
@@ -251,7 +255,11 @@ class CalculationResultCard extends StatelessWidget {
                       if (success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('تمت إضافة "${calculation.name}" إلى قائمة مشروع المنزل بنجاح'),
+                            content: Text(
+                              isArabic
+                                  ? 'تمت إضافة "${calculation.name}" إلى قائمة مشروع المنزل بنجاح'
+                                  : 'Added "${calculation.name}" to Home Project successfully',
+                            ),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: AppTheme.accentGreen,
                             duration: const Duration(seconds: 2),
@@ -261,7 +269,7 @@ class CalculationResultCard extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.bookmark_add_rounded),
-                    label: const Text('إضافة لمشروع المنزل'),
+                    label: Text(isArabic ? 'إضافة لمشروع المنزل' : 'Add to Home Project'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryDarkAmber,
                       foregroundColor: Colors.white,
@@ -277,7 +285,7 @@ class CalculationResultCard extends StatelessWidget {
                   onPressed: () {
                     context.read<LightingProvider>().clearCurrentCalculation();
                   },
-                  tooltip: 'إخفاء النتيجة',
+                  tooltip: isArabic ? 'إخفاء النتيجة' : 'Dismiss',
                   icon: const Icon(Icons.close_rounded),
                 ),
               ],

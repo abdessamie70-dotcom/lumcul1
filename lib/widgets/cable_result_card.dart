@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/cable_calculation_result.dart';
 import '../providers/cable_sizing_provider.dart';
+import '../providers/lighting_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/pdf_generator.dart';
 
@@ -13,6 +14,7 @@ class CableResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = context.watch<LightingProvider>().isArabic;
 
     if (result.isOverCapacity) {
       return Container(
@@ -27,14 +29,18 @@ class CableResultCard extends StatelessWidget {
           children: [
             const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 36),
             const SizedBox(height: 10),
-            const Text(
-              'الحمل يتجاوز سعة أكبر كابل مفرد في الجدول (240 mm²)',
+            Text(
+              isArabic
+                  ? 'الحمل يتجاوز سعة أكبر كابل مفرد في الجدول (240 mm²)'
+                  : 'Load exceeds single cable maximum in table (240 mm²)',
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              'تيار التصميم المطلوب: ${result.designCurrentIb.toStringAsFixed(1)} A | تيار Iz المطلوب: ${result.requiredIz.toStringAsFixed(1)} A.\nيُنصح بتمديد كابلين أو أكثر على التوازي (Parallel Cables) لتوزيع الحمل.',
+              isArabic
+                  ? 'تيار التصميم المطلوب: ${result.designCurrentIb.toStringAsFixed(1)} A | تيار Iz المطلوب: ${result.requiredIz.toStringAsFixed(1)} A.\nيُنصح بتمديد كابلين أو أكثر على التوازي (Parallel Cables) لتوزيع الحمل.'
+                  : 'Required Design Current Ib: ${result.designCurrentIb.toStringAsFixed(1)} A | Required Iz: ${result.requiredIz.toStringAsFixed(1)} A.\nMultiple parallel cables are recommended to distribute the load.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
@@ -96,9 +102,9 @@ class CableResultCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'مقطع الكابل الموصى به هندسياً:',
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      Text(
+                        isArabic ? 'مقطع الكابل الموصى به هندسياً:' : 'Recommended Standard Section:',
+                        style: const TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                       const SizedBox(height: 2),
                       Row(
@@ -182,7 +188,7 @@ class CableResultCard extends StatelessWidget {
               children: [
                 _buildStatTile(
                   context,
-                  title: 'Design Current (Ib) - تيار التصميم',
+                  title: isArabic ? 'تيار التصميم (Ib)' : 'Design Current (Ib)',
                   value: result.designCurrentIb.toStringAsFixed(2),
                   unit: 'A',
                   icon: Icons.electric_meter_rounded,
@@ -190,7 +196,7 @@ class CableResultCard extends StatelessWidget {
                 ),
                 _buildStatTile(
                   context,
-                  title: 'Min S (Voltage Drop) - أقل مقطع لهبوط الجهد',
+                  title: isArabic ? 'أقل مقطع لهبوط الجهد (Min S)' : 'Min Section for ΔV (Min S)',
                   value: result.minSectionForVoltageDropMinS.toStringAsFixed(2),
                   unit: 'mm²',
                   icon: Icons.trending_down_rounded,
@@ -198,30 +204,30 @@ class CableResultCard extends StatelessWidget {
                 ),
                 _buildStatTile(
                   context,
-                  title: 'Recommended Cross-Section - المقطع الموصى به',
+                  title: isArabic ? 'المقطع الموصى به' : 'Recommended Cross-Section',
                   value: sectionStr,
                   unit: 'mm²',
-                  subtitle: 'المقطع المختار من الجدول',
+                  subtitle: isArabic ? 'المقطع المختار من الجدول' : 'Selected standard size',
                   icon: Icons.cable_rounded,
                   color: AppTheme.accentBlue,
                   highlight: true,
                 ),
                 _buildStatTile(
                   context,
-                  title: 'Final Cable Capacity (Iz) - السعة النهائية',
+                  title: isArabic ? 'السعة النهائية (Iz)' : 'Cable Ampacity (Iz)',
                   value: result.finalCableCapacityIz?.toStringAsFixed(2) ?? '-',
                   unit: 'A',
-                  subtitle: 'السعة الأصلية (${result.cableCapacity?.toStringAsFixed(1)}A) × K (${result.correctionFactorK})',
+                  subtitle: 'Raw: ${result.cableCapacity?.toStringAsFixed(1)}A × K: ${result.correctionFactorK}',
                   icon: Icons.speed_rounded,
                   color: const Color(0xFF10B981),
                   highlight: true,
                 ),
                 _buildStatTile(
                   context,
-                  title: 'Actual Voltage Drop - هبوط الجهد الفعلي',
+                  title: isArabic ? 'هبوط الجهد الفعلي (ΔV)' : 'Actual Voltage Drop (ΔV)',
                   value: '${result.actualDeltaVPct?.toStringAsFixed(2)} %',
                   unit: '(${result.actualDeltaVVolts?.toStringAsFixed(2)} V)',
-                  subtitle: 'الحد الأقصى: ${result.maxDeltaVPct}% (${result.maxDeltaVLimitVolts.toStringAsFixed(2)} V)',
+                  subtitle: '${isArabic ? "الحد الأقصى:" : "Max limit:"} ${result.maxDeltaVPct}% (${result.maxDeltaVLimitVolts.toStringAsFixed(2)} V)',
                   icon: Icons.electric_bolt_rounded,
                   color: (result.actualDeltaVPct ?? 0) <= result.maxDeltaVPct
                       ? const Color(0xFF10B981)
@@ -229,10 +235,10 @@ class CableResultCard extends StatelessWidget {
                 ),
                 _buildStatTile(
                   context,
-                  title: 'Suggested Breaker - القاطع المناسب',
+                  title: isArabic ? 'القاطع المناسب' : 'Recommended Breaker',
                   value: '${result.suggestedBreakerAmps}',
                   unit: 'A',
-                  subtitle: 'قاطع قياسي مناسب (MCB / MCCB)',
+                  subtitle: isArabic ? 'قاطع قياسي مناسب (MCB)' : 'Standard MCB / MCCB',
                   icon: Icons.toggle_on_rounded,
                   color: const Color(0xFFF59E0B),
                 ),
@@ -256,14 +262,14 @@ class CableResultCard extends StatelessWidget {
               child: Column(
                 children: [
                   _buildCheckRow(
-                    label: 'التحمل الحراري للتيار:',
-                    detail: 'سعة الكابل (${result.cableCapacity?.toStringAsFixed(1)} A) ≥ Iz المطلوب (${result.requiredIz.toStringAsFixed(1)} A)',
-                    isValid: (result.cableCapacity ?? 0) >= result.requiredIz,
+                    label: isArabic ? 'التحمل الحراري للتيار:' : 'Thermal Capacity:',
+                    detail: 'Iz (${result.finalCableCapacityIz?.toStringAsFixed(1) ?? "-"} A) ≥ Ib (${result.designCurrentIb.toStringAsFixed(1)} A)',
+                    isValid: (result.finalCableCapacityIz ?? 0) >= result.designCurrentIb,
                   ),
                   const SizedBox(height: 6),
                   _buildCheckRow(
-                    label: 'هبوط الجهد المسموح به:',
-                    detail: 'مقطع الكابل ($sectionStr mm²) ≥ أقل مقطع مطلوب (${result.minSectionForVoltageDropMinS.toStringAsFixed(2)} mm²)',
+                    label: isArabic ? 'هبوط الجهد المسموح به:' : 'Voltage Drop Compliance:',
+                    detail: 'S ($sectionStr mm²) ≥ Min S (${result.minSectionForVoltageDropMinS.toStringAsFixed(2)} mm²)',
                     isValid: cable.section >= result.minSectionForVoltageDropMinS,
                   ),
                 ],
@@ -282,9 +288,9 @@ class CableResultCard extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.picture_as_pdf_rounded, color: AppTheme.accentBlue),
-              label: const Text(
-                'تحميل تقرير الحساب الهندسي للكابل PDF (عربي / English)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              label: Text(
+                isArabic ? 'تحميل تقرير الحساب الهندسي للكابل (PDF بالإنجليزية)' : 'Download English Cable Sizing Report (PDF)',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 13),

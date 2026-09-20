@@ -43,35 +43,47 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
     'Surface Mounted',
   ];
 
-  final Map<String, String> _installationMethodLabels = const {
-    'In Conduit / Trunking': 'داخل مجرى / مواسير (In Conduit)',
-    'Direct Buried in Ground': 'مدفون مباشرة بالتربة (Direct Buried)',
-    'In Underground Duct': 'مدفون داخل أنبوب بالتربة (In Duct)',
-    'In Air / Cable Tray': 'في الهواء / حامل كابلات (In Air/Tray)',
-    'Surface Mounted': 'مثبت على جدار (Surface Mounted)',
-  };
+  String _getInstallationMethodLabel(String m, bool isArabic) {
+    if (isArabic) {
+      switch (m) {
+        case 'In Conduit / Trunking':
+          return 'داخل مجرى / مواسير (In Conduit)';
+        case 'Direct Buried in Ground':
+          return 'مدفون مباشرة بالتربة (Direct Buried)';
+        case 'In Underground Duct':
+          return 'مدفون داخل أنبوب بالتربة (In Duct)';
+        case 'In Air / Cable Tray':
+          return 'في الهواء / حامل كابلات (In Air/Tray)';
+        case 'Surface Mounted':
+          return 'مثبت على جدار (Surface Mounted)';
+        default:
+          return m;
+      }
+    } else {
+      return m;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    final provider = context.read<CableSizingProvider>();
-    _circuitNameController = TextEditingController(text: 'غرفة المعيشة');
-    _selectedPhase = provider.phase;
-    _voltageController = TextEditingController(text: provider.voltage.toInt().toString());
-    _loadValueController = TextEditingController(text: '${provider.loadValue}');
-    _selectedLoadType = provider.loadType;
-    _pfController = TextEditingController(text: '${provider.powerFactor}');
-    _lengthController = TextEditingController(text: '${provider.length.toInt()}');
-    _selectedMaterial = provider.material;
-    _maxDeltaVController = TextEditingController(text: '${provider.maxDeltaVPct.toInt()}');
+    _circuitNameController = TextEditingController();
+    _selectedPhase = '3-Phase';
+    _voltageController = TextEditingController();
+    _loadValueController = TextEditingController();
+    _selectedLoadType = 'kW';
+    _pfController = TextEditingController();
+    _lengthController = TextEditingController();
+    _selectedMaterial = 'Copper';
+    _maxDeltaVController = TextEditingController();
 
-    _selectedInsulation = provider.insulation;
-    _selectedInstallationMethod = provider.installationMethod;
-    _selectedTemperature = provider.temperature;
-    _selectedGroupingCircuits = provider.groupingCircuits;
-    _selectedCoreType = provider.coreType;
-    _isManualK = provider.isManualK;
-    _kController = TextEditingController(text: '${provider.correctionFactorK}');
+    _selectedInsulation = 'XLPE';
+    _selectedInstallationMethod = 'In Conduit / Trunking';
+    _selectedTemperature = 30.0;
+    _selectedGroupingCircuits = 1;
+    _selectedCoreType = 'Multi-Core';
+    _isManualK = false;
+    _kController = TextEditingController();
   }
 
   @override
@@ -88,10 +100,10 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
 
   void _onCalculate() {
     if (_formKey.currentState?.validate() ?? false) {
-      final voltage = double.tryParse(_voltageController.text) ?? 400.0;
-      final load = double.tryParse(_loadValueController.text) ?? 45.0;
+      final voltage = double.tryParse(_voltageController.text) ?? (_selectedPhase == '1-Phase' ? 230.0 : 400.0);
+      final load = double.tryParse(_loadValueController.text) ?? 0.0;
       final pf = double.tryParse(_pfController.text) ?? 0.85;
-      final length = double.tryParse(_lengthController.text) ?? 85.0;
+      final length = double.tryParse(_lengthController.text) ?? 0.0;
       final maxDeltaV = double.tryParse(_maxDeltaVController.text) ?? 3.0;
       final k = double.tryParse(_kController.text);
 
@@ -122,29 +134,31 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
 
   void _resetDefaults() {
     final provider = context.read<CableSizingProvider>();
-    provider.resetDefaults();
+    provider.clearResult();
     setState(() {
-      _selectedPhase = provider.phase;
-      _voltageController.text = provider.voltage.toInt().toString();
-      _loadValueController.text = '${provider.loadValue}';
-      _selectedLoadType = provider.loadType;
-      _pfController.text = '${provider.powerFactor}';
-      _lengthController.text = '${provider.length.toInt()}';
-      _selectedMaterial = provider.material;
-      _maxDeltaVController.text = '${provider.maxDeltaVPct.toInt()}';
-      _selectedInsulation = provider.insulation;
-      _selectedInstallationMethod = provider.installationMethod;
-      _selectedTemperature = provider.temperature;
-      _selectedGroupingCircuits = provider.groupingCircuits;
-      _selectedCoreType = provider.coreType;
+      _circuitNameController.clear();
+      _selectedPhase = '3-Phase';
+      _voltageController.clear();
+      _loadValueController.clear();
+      _selectedLoadType = 'kW';
+      _pfController.clear();
+      _lengthController.clear();
+      _selectedMaterial = 'Copper';
+      _maxDeltaVController.clear();
+      _selectedInsulation = 'XLPE';
+      _selectedInstallationMethod = 'In Conduit / Trunking';
+      _selectedTemperature = 30.0;
+      _selectedGroupingCircuits = 1;
+      _selectedCoreType = 'Multi-Core';
       _isManualK = false;
-      _kController.text = '${provider.correctionFactorK}';
+      _kController.clear();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CableSizingProvider>();
+    final isArabic = context.watch<LightingProvider>().isArabic;
     final result = provider.result;
 
     return SingleChildScrollView(
@@ -158,12 +172,12 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // بنر توضيحي لحاسبة الكابلات
-                _buildIntroBanner(context),
+                _buildIntroBanner(context, isArabic),
                 const SizedBox(height: 16),
 
                 // اسم الدائرة لربطها بمشروع المنزل
                 Text(
-                  AppStrings.get('circuit_name_for_proj', context.watch<LightingProvider>().isArabic),
+                  AppStrings.get('circuit_name_for_proj', isArabic),
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
@@ -171,13 +185,13 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                   controller: _circuitNameController,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.bookmark_outline_rounded, size: 18),
-                    hintText: context.watch<LightingProvider>().isArabic ? 'مثلاً: غرفة المعيشة أو اللوحة الرئيسية' : 'e.g., Living Room or Main Feeder',
+                    hintText: AppStrings.get('circuit_name_hint', isArabic),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // قسم 1: النظام والجهد
-                _buildSectionTitle('1. نظام التغذية والجهد الكهربائي', Icons.bolt_rounded),
+                _buildSectionTitle(AppStrings.get('sec_supply_system', isArabic), Icons.bolt_rounded),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,13 +200,19 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedPhase),
                         initialValue: _selectedPhase,
-                        decoration: const InputDecoration(
-                          labelText: 'نظام الأطوار (Phase)',
-                          prefixIcon: Icon(Icons.electrical_services_rounded),
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('phase_system_label', isArabic),
+                          prefixIcon: const Icon(Icons.electrical_services_rounded),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: '1-Phase', child: Text('1-Phase (أحادي)')),
-                          DropdownMenuItem(value: '3-Phase', child: Text('3-Phase (ثلاثي)')),
+                        items: [
+                          DropdownMenuItem(
+                            value: '1-Phase',
+                            child: Text(isArabic ? '1-Phase (أحادي)' : '1-Phase (Single)'),
+                          ),
+                          DropdownMenuItem(
+                            value: '3-Phase',
+                            child: Text(isArabic ? '3-Phase (ثلاثي)' : '3-Phase (Three)'),
+                          ),
                         ],
                         onChanged: (val) {
                           if (val != null) {
@@ -204,7 +224,6 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                                 _voltageController.text = '400';
                               }
                             });
-                            _onCalculate();
                           }
                         },
                       ),
@@ -214,19 +233,18 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: TextFormField(
                         controller: _voltageController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'الجهد (Voltage)',
-                          hintText: '400',
-                          prefixIcon: Icon(Icons.flash_on_rounded),
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('voltage_label', isArabic),
+                          hintText: _selectedPhase == '1-Phase' ? '230' : '400',
+                          prefixIcon: const Icon(Icons.flash_on_rounded),
                           suffixText: 'V',
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'مطلوب';
+                          if (v == null || v.trim().isEmpty) return AppStrings.get('required_field', isArabic);
                           final val = double.tryParse(v);
-                          if (val == null || val <= 0) return 'غير صالح';
+                          if (val == null || val <= 0) return AppStrings.get('invalid_value', isArabic);
                           return null;
                         },
-                        onChanged: (_) => _onCalculate(),
                       ),
                     ),
                   ],
@@ -235,7 +253,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                 const SizedBox(height: 18),
 
                 // قسم 2: بيانات الحمل الكهربائي
-                _buildSectionTitle('2. بيانات الحمل الكهربائي', Icons.power_rounded),
+                _buildSectionTitle(AppStrings.get('sec_load_data', isArabic), Icons.power_rounded),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,18 +264,17 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                         controller: _loadValueController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
-                          labelText: 'قيمة الحمل',
+                          labelText: AppStrings.get('load_value_label', isArabic),
                           hintText: '45',
                           prefixIcon: const Icon(Icons.speed_rounded),
                           suffixText: _selectedLoadType,
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'مطلوب';
+                          if (v == null || v.trim().isEmpty) return AppStrings.get('required_field', isArabic);
                           final val = double.tryParse(v);
-                          if (val == null || val <= 0) return 'غير صالح';
+                          if (val == null || val <= 0) return AppStrings.get('invalid_value', isArabic);
                           return null;
                         },
-                        onChanged: (_) => _onCalculate(),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -266,20 +283,19 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedLoadType),
                         initialValue: _selectedLoadType,
-                        decoration: const InputDecoration(
-                          labelText: 'نوع الحمل',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('load_type_label', isArabic),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'kW', child: Text('kW (كيلوواط)')),
+                          DropdownMenuItem(value: 'kW', child: Text('kW')),
                           DropdownMenuItem(value: 'kVA', child: Text('kVA')),
-                          DropdownMenuItem(value: 'Amps', child: Text('Amps (أمبير)')),
+                          DropdownMenuItem(value: 'Amps', child: Text('Amps')),
                         ],
                         onChanged: (val) {
                           if (val != null) {
                             setState(() {
                               _selectedLoadType = val;
                             });
-                            _onCalculate();
                           }
                         },
                       ),
@@ -293,28 +309,27 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                   TextFormField(
                     controller: _pfController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'معامل القدرة (Power Factor - cos φ)',
+                    decoration: InputDecoration(
+                      labelText: AppStrings.get('power_factor_label', isArabic),
                       hintText: '0.85',
-                      prefixIcon: Icon(Icons.pie_chart_outline_rounded),
-                      helperText: 'قيمة بين 0.70 إلى 1.00 (افتراضي: 0.85)',
+                      prefixIcon: const Icon(Icons.pie_chart_outline_rounded),
+                      helperText: AppStrings.get('power_factor_helper', isArabic),
                     ),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'مطلوب';
+                      if (v == null || v.trim().isEmpty) return AppStrings.get('required_field', isArabic);
                       final val = double.tryParse(v);
                       if (val == null || val < 0.5 || val > 1.0) {
-                        return 'يجب أن يكون بين 0.70 و 1.00';
+                        return AppStrings.get('invalid_value', isArabic);
                       }
                       return null;
                     },
-                    onChanged: (_) => _onCalculate(),
                   ),
                 ],
 
                 const SizedBox(height: 18),
 
                 // قسم 3: مواصفات الكابل والعزل
-                _buildSectionTitle('3. مواصفات الكابل ونوع العزل (IEC Standards)', Icons.cable_rounded),
+                _buildSectionTitle(AppStrings.get('sec_cable_insulation', isArabic), Icons.cable_rounded),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,18 +339,23 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedMaterial),
                         initialValue: _selectedMaterial,
-                        decoration: const InputDecoration(
-                          labelText: 'مادة الموصل',
-                          prefixIcon: Icon(Icons.category_rounded),
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('material_label', isArabic),
+                          prefixIcon: const Icon(Icons.category_rounded),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 'Copper', child: Text('نحاس (Copper - γ=56)')),
-                          DropdownMenuItem(value: 'Aluminum', child: Text('ألمنيوم (Al - γ=35)')),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'Copper',
+                            child: Text(isArabic ? 'نحاس (Copper - γ=56)' : 'Copper (Cu - γ=56)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Aluminum',
+                            child: Text(isArabic ? 'ألمنيوم (Al - γ=35)' : 'Aluminum (Al - γ=35)'),
+                          ),
                         ],
                         onChanged: (val) {
                           if (val != null) {
                             setState(() => _selectedMaterial = val);
-                            _onCalculate();
                           }
                         },
                       ),
@@ -346,9 +366,9 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedInsulation),
                         initialValue: _selectedInsulation,
-                        decoration: const InputDecoration(
-                          labelText: 'نوع العزل (Insulation)',
-                          prefixIcon: Icon(Icons.shield_outlined),
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('insulation_label', isArabic),
+                          prefixIcon: const Icon(Icons.shield_outlined),
                         ),
                         items: const [
                           DropdownMenuItem(value: 'XLPE', child: Text('XLPE (90°C)')),
@@ -357,7 +377,6 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                         onChanged: (val) {
                           if (val != null) {
                             setState(() => _selectedInsulation = val);
-                            _onCalculate();
                           }
                         },
                       ),
@@ -371,47 +390,51 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(_selectedCoreType),
                   initialValue: _selectedCoreType,
-                  decoration: const InputDecoration(
-                    labelText: 'بنية الكابل (Core Type)',
-                    prefixIcon: Icon(Icons.view_agenda_rounded),
+                  decoration: InputDecoration(
+                    labelText: AppStrings.get('core_type_label', isArabic),
+                    prefixIcon: const Icon(Icons.view_agenda_rounded),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'Multi-Core', child: Text('كابل متعدد الأنوية (Multi-Core Cable)')),
-                    DropdownMenuItem(value: 'Single-Core', child: Text('كابلات أحادية النواة (Single-Core Cables)')),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'Multi-Core',
+                      child: Text(isArabic ? 'كابل متعدد الأنوية (Multi-Core)' : 'Multi-Core Cable'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Single-Core',
+                      child: Text(isArabic ? 'كابلات أحادية النواة (Single-Core)' : 'Single-Core Cables'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) {
                       setState(() => _selectedCoreType = val);
-                      _onCalculate();
                     }
                   },
                 ),
 
                 const SizedBox(height: 18),
 
-                // قسم 4: طريقة التمديد وظروف التشغيل
-                _buildSectionTitle('4. طريقة التمديد والظروف البيئية', Icons.route_rounded),
+                // قسم 4: طريقة التمديد والظروف البيئية
+                _buildSectionTitle(AppStrings.get('sec_installation_ambient', isArabic), Icons.route_rounded),
                 const SizedBox(height: 10),
 
                 // طريقة التمديد
                 DropdownButtonFormField<String>(
                   key: ValueKey(_selectedInstallationMethod),
                   initialValue: _selectedInstallationMethod,
-                  decoration: const InputDecoration(
-                    labelText: 'طريقة التمديد (Installation Method)',
-                    prefixIcon: Icon(Icons.alt_route_rounded),
+                  decoration: InputDecoration(
+                    labelText: AppStrings.get('method_label', isArabic),
+                    prefixIcon: const Icon(Icons.alt_route_rounded),
                   ),
                   items: _installationMethods.map((m) {
                     return DropdownMenuItem(
                       value: m,
-                      child: Text(_installationMethodLabels[m] ?? m),
+                      child: Text(_getInstallationMethodLabel(m, isArabic)),
                     );
                   }).toList(),
                   onChanged: (val) {
                     if (val != null) {
                       setState(() {
                         _selectedInstallationMethod = val;
-                        // ضبط حرارة مرجعية تلقائية (20 للتربة أو 30 للهواء)
                         final isBuried = val.toLowerCase().contains('buried') || val.toLowerCase().contains('duct');
                         if (isBuried && _selectedTemperature == 30.0) {
                           _selectedTemperature = 20.0;
@@ -419,7 +442,6 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                           _selectedTemperature = 30.0;
                         }
                       });
-                      _onCalculate();
                     }
                   },
                 ),
@@ -438,24 +460,23 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                         decoration: InputDecoration(
                           labelText: _selectedInstallationMethod.toLowerCase().contains('buried') ||
                                   _selectedInstallationMethod.toLowerCase().contains('duct')
-                              ? 'حرارة التربة (Soil Temp)'
-                              : 'حرارة المحيط (Ambient Temp)',
+                              ? AppStrings.get('soil_temp_label', isArabic)
+                              : AppStrings.get('ambient_temp_label', isArabic),
                           prefixIcon: const Icon(Icons.thermostat_rounded),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 15.0, child: Text('15 °C')),
-                          DropdownMenuItem(value: 20.0, child: Text('20 °C (مرجع التربة)')),
-                          DropdownMenuItem(value: 25.0, child: Text('25 °C')),
-                          DropdownMenuItem(value: 30.0, child: Text('30 °C (مرجع الهواء)')),
-                          DropdownMenuItem(value: 35.0, child: Text('35 °C')),
-                          DropdownMenuItem(value: 40.0, child: Text('40 °C')),
-                          DropdownMenuItem(value: 45.0, child: Text('45 °C')),
-                          DropdownMenuItem(value: 50.0, child: Text('50 °C')),
+                        items: [
+                          const DropdownMenuItem(value: 15.0, child: Text('15 °C')),
+                          DropdownMenuItem(value: 20.0, child: Text(isArabic ? '20 °C (مرجع التربة)' : '20 °C (Soil Ref)')),
+                          const DropdownMenuItem(value: 25.0, child: Text('25 °C')),
+                          DropdownMenuItem(value: 30.0, child: Text(isArabic ? '30 °C (مرجع الهواء)' : '30 °C (Air Ref)')),
+                          const DropdownMenuItem(value: 35.0, child: Text('35 °C')),
+                          const DropdownMenuItem(value: 40.0, child: Text('40 °C')),
+                          const DropdownMenuItem(value: 45.0, child: Text('45 °C')),
+                          const DropdownMenuItem(value: 50.0, child: Text('50 °C')),
                         ],
                         onChanged: (val) {
                           if (val != null) {
                             setState(() => _selectedTemperature = val);
-                            _onCalculate();
                           }
                         },
                       ),
@@ -466,22 +487,21 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: DropdownButtonFormField<int>(
                         key: ValueKey(_selectedGroupingCircuits),
                         initialValue: _selectedGroupingCircuits,
-                        decoration: const InputDecoration(
-                          labelText: 'التجاور (Circuits)',
-                          prefixIcon: Icon(Icons.group_work_rounded),
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('grouping_label', isArabic),
+                          prefixIcon: const Icon(Icons.group_work_rounded),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 1, child: Text('1 (كابل منفرد)')),
-                          DropdownMenuItem(value: 2, child: Text('2 دوائر')),
-                          DropdownMenuItem(value: 3, child: Text('3 دوائر')),
-                          DropdownMenuItem(value: 4, child: Text('4 دوائر')),
-                          DropdownMenuItem(value: 5, child: Text('5 دوائر')),
-                          DropdownMenuItem(value: 6, child: Text('6 دوائر أو أكثر')),
+                        items: [
+                          DropdownMenuItem(value: 1, child: Text(isArabic ? '1 (كابل منفرد)' : '1 (Single Cable)')),
+                          DropdownMenuItem(value: 2, child: Text(isArabic ? '2 دوائر' : '2 Circuits')),
+                          DropdownMenuItem(value: 3, child: Text(isArabic ? '3 دوائر' : '3 Circuits')),
+                          DropdownMenuItem(value: 4, child: Text(isArabic ? '4 دوائر' : '4 Circuits')),
+                          DropdownMenuItem(value: 5, child: Text(isArabic ? '5 دوائر' : '5 Circuits')),
+                          DropdownMenuItem(value: 6, child: Text(isArabic ? '6 دوائر أو أكثر' : '6+ Circuits')),
                         ],
                         onChanged: (val) {
                           if (val != null) {
                             setState(() => _selectedGroupingCircuits = val);
-                            _onCalculate();
                           }
                         },
                       ),
@@ -489,7 +509,11 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
+
+                // قسم 5: طول الخط وهبوط الجهد المسموح
+                _buildSectionTitle(AppStrings.get('sec_length_drop', isArabic), Icons.straighten_rounded),
+                const SizedBox(height: 10),
 
                 // طول الكابل وأقصى هبوط جهد
                 Row(
@@ -499,19 +523,18 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: TextFormField(
                         controller: _lengthController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'طول الكابل (Length)',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('cable_length_label', isArabic),
                           hintText: '85',
-                          prefixIcon: Icon(Icons.straighten_rounded),
-                          suffixText: 'متر',
+                          prefixIcon: const Icon(Icons.straighten_rounded),
+                          suffixText: AppStrings.get('meter_unit', isArabic),
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'مطلوب';
+                          if (v == null || v.trim().isEmpty) return AppStrings.get('required_field', isArabic);
                           final val = double.tryParse(v);
-                          if (val == null || val <= 0) return 'غير صالح';
+                          if (val == null || val <= 0) return AppStrings.get('invalid_value', isArabic);
                           return null;
                         },
-                        onChanged: (_) => _onCalculate(),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -519,20 +542,19 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: TextFormField(
                         controller: _maxDeltaVController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'أقصى هبوط جهد مسموح',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('max_deltav_label', isArabic),
                           hintText: '3',
-                          prefixIcon: Icon(Icons.arrow_downward_rounded),
+                          prefixIcon: const Icon(Icons.arrow_downward_rounded),
                           suffixText: '%',
-                          helperText: 'المعيار القياسي 3% أو 5%',
+                          helperText: isArabic ? 'المعيار القياسي 3% أو 5%' : 'Standard limit 3% or 5%',
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'مطلوب';
+                          if (v == null || v.trim().isEmpty) return AppStrings.get('required_field', isArabic);
                           final val = double.tryParse(v);
-                          if (val == null || val <= 0 || val > 20) return 'غير صالح';
+                          if (val == null || val <= 0 || val > 20) return AppStrings.get('invalid_value', isArabic);
                           return null;
                         },
-                        onChanged: (_) => _onCalculate(),
                       ),
                     ),
                   ],
@@ -556,9 +578,9 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'معامل التصحيح الكلي (K Factor):',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              Text(
+                                isArabic ? 'معامل التصحيح الكلي (K Factor):' : 'Total Correction Factor (K):',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                               Text(
                                 'K_temp (${provider.kTemp.toStringAsFixed(2)}) × K_group (${provider.kGroup.toStringAsFixed(2)}) = ${provider.computedAutoK.toStringAsFixed(2)}',
@@ -569,7 +591,9 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                           Row(
                             children: [
                               Text(
-                                _isManualK ? 'يدوي' : 'آلي IEC',
+                                _isManualK
+                                    ? (isArabic ? 'يدوي' : 'Manual')
+                                    : (isArabic ? 'آلي IEC' : 'Auto IEC'),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -586,7 +610,6 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                                       _kController.text = provider.computedAutoK.toStringAsFixed(2);
                                     }
                                   });
-                                  _onCalculate();
                                 },
                               ),
                             ],
@@ -598,12 +621,11 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                         TextFormField(
                           controller: _kController,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(
-                            labelText: 'قيمة معامل التصحيح المخصصة (K)',
+                          decoration: InputDecoration(
+                            labelText: isArabic ? 'قيمة معامل التصحيح المخصصة (K)' : 'Custom Correction Factor (K)',
                             hintText: '0.87',
-                            prefixIcon: Icon(Icons.tune_rounded),
+                            prefixIcon: const Icon(Icons.tune_rounded),
                           ),
-                          onChanged: (_) => _onCalculate(),
                         ),
                       ],
                     ],
@@ -619,9 +641,9 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _onCalculate,
                         icon: const Icon(Icons.calculate_rounded),
-                        label: const Text(
-                          'حساب مقطع الكابل',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        label: Text(
+                          AppStrings.get('btn_calculate_cable', isArabic),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentBlue,
@@ -633,7 +655,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                     const SizedBox(width: 8),
                     IconButton.filledTonal(
                       onPressed: _resetDefaults,
-                      tooltip: 'استعادة القيم الافتراضية',
+                      tooltip: AppStrings.get('btn_reset_defaults', isArabic),
                       icon: const Icon(Icons.restart_alt_rounded),
                     ),
                   ],
@@ -645,7 +667,6 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: () {
-                      final isArabic = context.read<LightingProvider>().isArabic;
                       final name = _circuitNameController.text.trim().isEmpty 
                           ? (isArabic ? 'كابل التغذية' : 'Feeder Cable') 
                           : _circuitNameController.text.trim();
@@ -662,7 +683,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                       );
                     },
                     icon: const Icon(Icons.add_circle_outline_rounded),
-                    label: Text(AppStrings.get('btn_add_to_project', context.watch<LightingProvider>().isArabic)),
+                    label: Text(AppStrings.get('btn_add_to_project', isArabic)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accentBlue,
                       foregroundColor: Colors.white,
@@ -681,7 +702,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
     );
   }
 
-  Widget _buildIntroBanner(BuildContext context) {
+  Widget _buildIntroBanner(BuildContext context, bool isArabic) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -705,7 +726,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'حساب دقيق لمقاطع الكابلات وفق معايير IEC 60364-5-52 بناءً على تيار التصميم (Ib)، هبوط الجهد (ΔV)، طريقة التمديد، نوع العزل، والحرارة والتجاور.',
+              AppStrings.get('cable_banner', isArabic),
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,

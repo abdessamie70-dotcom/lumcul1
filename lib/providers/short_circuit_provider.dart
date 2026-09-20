@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/short_circuit_model.dart';
 
 class ShortCircuitProvider extends ChangeNotifier {
-  String _circuitName = 'غرفة المعيشة';
+  String _circuitName = '';
   bool _isThreePhase = true;
   double _voltage = 400.0;
   double _upstreamIscKa = 15.0;
@@ -16,9 +16,7 @@ class ShortCircuitProvider extends ChangeNotifier {
 
   ShortCircuitResult? _result;
 
-  ShortCircuitProvider() {
-    calculate();
-  }
+  ShortCircuitProvider();
 
   // Getters
   String get circuitName => _circuitName;

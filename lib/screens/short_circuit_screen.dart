@@ -15,17 +15,13 @@ class ShortCircuitScreen extends StatefulWidget {
 }
 
 class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'غرفة المعيشة');
-  final TextEditingController _sourceIscController = TextEditingController(text: '15');
-  final TextEditingController _lenController = TextEditingController(text: '50');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _sourceIscController = TextEditingController();
+  final TextEditingController _lenController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final scProvider = context.read<ShortCircuitProvider>();
-    _nameController.text = scProvider.circuitName;
-    _sourceIscController.text = scProvider.upstreamIscKa.toString();
-    _lenController.text = scProvider.cableLength.toString();
   }
 
   @override
@@ -113,7 +109,7 @@ class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
                         controller: _nameController,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.bookmark_outline_rounded, size: 18),
-                          hintText: isArabic ? 'مثلاً: غرفة المعيشة أو اللوحة الرئيسية' : 'e.g., Living Room or Main Feeder',
+                          hintText: AppStrings.get('circuit_name_hint', isArabic),
                         ),
                         onChanged: (val) => scProvider.setCircuitName(val),
                       ),
@@ -151,10 +147,13 @@ class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
                                 TextFormField(
                                   controller: _sourceIscController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: const InputDecoration(suffixText: 'kA'),
+                                  decoration: const InputDecoration(
+                                    hintText: '15',
+                                    suffixText: 'kA',
+                                  ),
                                   onChanged: (val) {
-                                    final d = double.tryParse(val) ?? 15.0;
-                                    scProvider.setUpstreamIscKa(d);
+                                    final d = double.tryParse(val);
+                                    if (d != null) scProvider.setUpstreamIscKa(d);
                                   },
                                 ),
                               ],
@@ -193,10 +192,13 @@ class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
                                 TextFormField(
                                   controller: _lenController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: InputDecoration(suffixText: isArabic ? 'متر' : 'm'),
+                                  decoration: InputDecoration(
+                                    hintText: '50',
+                                    suffixText: isArabic ? 'متر' : 'm',
+                                  ),
                                   onChanged: (val) {
-                                    final d = double.tryParse(val) ?? 50.0;
-                                    scProvider.setCableLength(d);
+                                    final d = double.tryParse(val);
+                                    if (d != null) scProvider.setCableLength(d);
                                   },
                                 ),
                               ],
@@ -328,6 +330,30 @@ class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // زر الحساب والفحص
+              ElevatedButton.icon(
+                onPressed: () {
+                  final sourceIsc = double.tryParse(_sourceIscController.text) ?? 15.0;
+                  final len = double.tryParse(_lenController.text) ?? 50.0;
+                  scProvider.setCircuitName(_nameController.text.trim());
+                  scProvider.setUpstreamIscKa(sourceIsc);
+                  scProvider.setCableLength(len);
+                  scProvider.calculate();
+                },
+                icon: const Icon(Icons.calculate_rounded),
+                label: Text(
+                  isArabic ? 'فحص تيار القصر والحماية' : 'Calculate Short-Circuit & Protection',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentEmerald,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -544,13 +570,16 @@ class _ShortCircuitScreenState extends State<ShortCircuitScreen> {
                         // زر إضافة لمشروع المنزل
                         ElevatedButton.icon(
                           onPressed: () {
-                            lightingProvider.addOrUpdateShortCircuitToProject(_nameController.text, result);
+                            final name = _nameController.text.trim().isEmpty 
+                                ? (isArabic ? 'دائرة الحماية' : 'Protection Circuit') 
+                                : _nameController.text.trim();
+                            lightingProvider.addOrUpdateShortCircuitToProject(name, result);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   isArabic
-                                      ? 'تم ربط حماية [${_nameController.text}] (${result.ratedCurrentIn.toInt()}A Curve ${result.curve.code}) بمشروع المنزل بنجاح!'
-                                      : 'Protection for [${_nameController.text}] added to Home Project successfully!',
+                                      ? 'تم ربط حماية [$name] (${result.ratedCurrentIn.toInt()}A Curve ${result.curve.code}) بمشروع المنزل بنجاح!'
+                                      : 'Protection for [$name] added to Home Project successfully!',
                                 ),
                                 backgroundColor: AppTheme.accentEmerald,
                               ),

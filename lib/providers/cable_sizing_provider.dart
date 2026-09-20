@@ -59,22 +59,11 @@ class CableSizingProvider extends ChangeNotifier {
 
   CableSizingProvider() {
     _correctionFactorK = computedAutoK;
-    calculate(
-      phase: _phase,
-      voltage: _voltage,
-      loadValue: _loadValue,
-      loadType: _loadType,
-      powerFactor: _powerFactor,
-      length: _length,
-      material: _material,
-      maxDeltaVPct: _maxDeltaVPct,
-      correctionFactorK: _correctionFactorK,
-      insulation: _insulation,
-      installationMethod: _installationMethod,
-      temperature: _temperature,
-      groupingCircuitsCount: _groupingCircuits,
-      coreType: _coreType,
-    );
+  }
+
+  void clearResult() {
+    _result = null;
+    notifyListeners();
   }
 
   void calculate({

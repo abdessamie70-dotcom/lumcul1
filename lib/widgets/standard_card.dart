@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/lighting_standard.dart';
+import '../providers/lighting_provider.dart';
 import '../utils/app_theme.dart';
 
 class StandardInfoCard extends StatelessWidget {
@@ -15,6 +17,7 @@ class StandardInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = context.watch<LightingProvider>().isArabic;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -44,7 +47,7 @@ class StandardInfoCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        standard.roomName,
+                        standard.getRoomName(isArabic),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -52,7 +55,7 @@ class StandardInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'المعيار الدولي: CIBSE / EN 12464',
+                        isArabic ? 'المعيار الدولي: CIBSE / EN 12464' : 'Standard: CIBSE / EN 12464',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -106,7 +109,7 @@ class StandardInfoCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'حرارة اللون:',
+                    isArabic ? 'حرارة اللون:' : 'Color Temp:',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -114,11 +117,13 @@ class StandardInfoCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '${standard.kelvin} (${standard.colorDescription})',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  Expanded(
+                    child: Text(
+                      '${standard.kelvin} (${standard.getColorDescription(isArabic)})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                      ),
                     ),
                   ),
                 ],
@@ -142,7 +147,7 @@ class StandardInfoCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    standard.notes,
+                    standard.getNotes(isArabic),
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
@@ -157,11 +162,11 @@ class StandardInfoCard extends StatelessWidget {
 
             // زر تطبيق المعيار مباشرة في الحاسبة
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
               child: OutlinedButton.icon(
                 onPressed: onApply,
                 icon: const Icon(Icons.calculate_outlined, size: 18),
-                label: const Text('تطبيق هذا المعيار في الحاسبة'),
+                label: Text(isArabic ? 'تطبيق هذا المعيار في الحاسبة' : 'Apply Standard to Calculator'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: standard.accentColor,
                   side: BorderSide(color: standard.accentColor),

@@ -25,22 +25,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lengthController = TextEditingController();
   final TextEditingController _widthController = TextEditingController();
-  final TextEditingController _luxController = TextEditingController(text: '150');
-  final TextEditingController _lumenController = TextEditingController(text: '806');
-  final TextEditingController _wattageController = TextEditingController(text: '9');
+  final TextEditingController _luxController = TextEditingController();
+  final TextEditingController _lumenController = TextEditingController();
+  final TextEditingController _wattageController = TextEditingController();
 
-  final List<String> _commonRooms = [
-    'غرفة النوم',
-    'غرفة المعيشة',
-    'المطبخ',
-    'المكتب / الدراسة',
-    'الحمامات',
-    'الممرات والمداخل',
-    'غرفة الطعام',
-    'أخرى (مخصص)',
+  static const List<Map<String, String>> _roomPresets = [
+    {'key': 'room_bedroom', 'lux': '150'},
+    {'key': 'room_living', 'lux': '200'},
+    {'key': 'room_kitchen', 'lux': '350'},
+    {'key': 'room_office', 'lux': '450'},
+    {'key': 'room_bath', 'lux': '250'},
+    {'key': 'room_corridor', 'lux': '120'},
+    {'key': 'room_dining', 'lux': '200'},
+    {'key': 'room_other', 'lux': ''},
   ];
 
-  String _selectedRoomPreset = 'غرفة النوم';
+  String? _selectedRoomKey;
   bool _isCustomRoomName = false;
 
   // أمثلة شائعة للمبات LED لتسهيل الإدخال السريع
@@ -54,7 +54,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = _selectedRoomPreset;
+    _selectedRoomKey = null;
   }
 
   @override
@@ -72,10 +72,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _applyStandardDirectly(LightingStandard standard) {
+    final isAr = context.read<LightingProvider>().isArabic;
     setState(() {
-      _selectedRoomPreset = standard.roomName;
-      _nameController.text = standard.roomName;
-      _isCustomRoomName = !_commonRooms.contains(standard.roomName);
+      _selectedRoomKey = 'room_other';
+      _isCustomRoomName = true;
+      _nameController.text = standard.getRoomName(isAr);
       _luxController.text = standard.defaultLux.toInt().toString();
     });
   }
@@ -98,10 +99,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       final lux = double.tryParse(_luxController.text) ?? 150.0;
       final lumen = double.tryParse(_lumenController.text) ?? 806.0;
       final wattage = double.tryParse(_wattageController.text) ?? 9.0;
+      final isAr = context.read<LightingProvider>().isArabic;
 
-      final roomName = _isCustomRoomName
-          ? _nameController.text.trim()
-          : _selectedRoomPreset;
+      final roomName = _isCustomRoomName || _selectedRoomKey == null || _selectedRoomKey == 'room_other'
+          ? (_nameController.text.trim().isEmpty ? (isAr ? 'غرفة بدون اسم' : 'Unnamed Room') : _nameController.text.trim())
+          : AppStrings.get(_selectedRoomKey!, isAr);
 
       context.read<LightingProvider>().calculate(
             roomName: roomName,
@@ -118,12 +120,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     setState(() {
       _lengthController.clear();
       _widthController.clear();
-      _selectedRoomPreset = 'غرفة النوم';
-      _nameController.text = 'غرفة النوم';
+      _luxController.clear();
+      _lumenController.clear();
+      _wattageController.clear();
+      _nameController.clear();
+      _selectedRoomKey = null;
       _isCustomRoomName = false;
-      _luxController.text = '150';
-      _lumenController.text = '806';
-      _wattageController.text = '9';
     });
     context.read<LightingProvider>().clearCurrentCalculation();
   }
@@ -266,6 +268,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     LightingProvider provider,
     dynamic calculation,
   ) {
+    final isArabic = provider.isArabic;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Center(
@@ -277,19 +280,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // بنر ترحيبي توضيحي
-                _buildIntroBanner(context),
+                _buildIntroBanner(context, isArabic),
                 const SizedBox(height: 16),
 
                 // قسم 1: بيانات الغرفة
                 _buildSectionHeader(
                   context,
-                  title: '1. بيانات الغرفة والأبعاد',
+                  title: AppStrings.get('sec_room_data', isArabic),
                   icon: Icons.meeting_room_outlined,
                 ),
                 const SizedBox(height: 12),
 
                 // اختيار الغرفة
-                _buildRoomNameSelector(context),
+                _buildRoomNameSelector(context, isArabic),
                 const SizedBox(height: 14),
 
                 // أبعاد الغرفة (الطول والعرض)
@@ -300,19 +303,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       child: TextFormField(
                         controller: _lengthController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'الطول (بالمتر)',
-                          hintText: 'مثال: 5.0',
-                          prefixIcon: Icon(Icons.straighten_rounded),
-                          suffixText: 'م',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('length_label', isArabic),
+                          hintText: AppStrings.get('length_hint', isArabic),
+                          prefixIcon: const Icon(Icons.straighten_rounded),
+                          suffixText: AppStrings.get('meter_unit', isArabic),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'مطلوب';
+                            return AppStrings.get('required_field', isArabic);
                           }
                           final val = double.tryParse(value);
                           if (val == null || val <= 0) {
-                            return 'قيمة غير صالحة';
+                            return AppStrings.get('invalid_value', isArabic);
                           }
                           return null;
                         },
@@ -323,19 +326,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       child: TextFormField(
                         controller: _widthController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'العرض (بالمتر)',
-                          hintText: 'مثال: 4.0',
-                          prefixIcon: Icon(Icons.square_foot_rounded),
-                          suffixText: 'م',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('width_label', isArabic),
+                          hintText: AppStrings.get('width_hint', isArabic),
+                          prefixIcon: const Icon(Icons.square_foot_rounded),
+                          suffixText: AppStrings.get('meter_unit', isArabic),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'مطلوب';
+                            return AppStrings.get('required_field', isArabic);
                           }
                           final val = double.tryParse(value);
                           if (val == null || val <= 0) {
-                            return 'قيمة غير صالحة';
+                            return AppStrings.get('invalid_value', isArabic);
                           }
                           return null;
                         },
@@ -349,7 +352,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 // قسم 2: شدة الإضاءة المطلوبة
                 _buildSectionHeader(
                   context,
-                  title: '2. شدة الإضاءة المطلوبة (Lux)',
+                  title: AppStrings.get('sec_target_lux', isArabic),
                   icon: Icons.wb_incandescent_outlined,
                 ),
                 const SizedBox(height: 8),
@@ -358,20 +361,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 TextFormField(
                   controller: _luxController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'شدة الإضاءة (Lux)',
-                    hintText: 'مثال: 150',
-                    prefixIcon: Icon(Icons.flash_on_rounded),
-                    suffixText: 'لوكس',
-                    helperText: 'يمكنك الاختيار السريع من المعايير الشائعة أدناه',
+                  decoration: InputDecoration(
+                    labelText: AppStrings.get('lux_label', isArabic),
+                    hintText: AppStrings.get('lux_hint', isArabic),
+                    prefixIcon: const Icon(Icons.flash_on_rounded),
+                    suffixText: AppStrings.get('lux_unit', isArabic),
+                    helperText: AppStrings.get('lux_helper', isArabic),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال شدة الإضاءة';
+                      return AppStrings.get('enter_lux', isArabic);
                     }
                     final val = double.tryParse(value);
                     if (val == null || val <= 0) {
-                      return 'قيمة غير صحيحة';
+                      return AppStrings.get('invalid_value', isArabic);
                     }
                     return null;
                   },
@@ -379,20 +382,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 const SizedBox(height: 10),
 
                 // شرائح اختيار شدة الإضاءة السريعة
-                _buildLuxPresetChips(),
+                _buildLuxPresetChips(isArabic),
 
                 const SizedBox(height: 20),
 
                 // قسم 3: مواصفات اللمبة المقترحة
                 _buildSectionHeader(
                   context,
-                  title: '3. خصائص اللمبة المختارة',
+                  title: AppStrings.get('sec_bulb_specs', isArabic),
                   icon: Icons.settings_suggest_outlined,
                 ),
                 const SizedBox(height: 8),
 
                 // شرائح اختيار لمبات سريعة
-                _buildBulbPresetChips(),
+                _buildBulbPresetChips(isArabic),
                 const SizedBox(height: 12),
 
                 Row(
@@ -402,19 +405,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       child: TextFormField(
                         controller: _lumenController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'تدفق اللمبة (Lumen)',
-                          hintText: '806',
-                          prefixIcon: Icon(Icons.sunny),
-                          suffixText: 'lm',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('lumen_label', isArabic),
+                          hintText: AppStrings.get('lumen_hint', isArabic),
+                          prefixIcon: const Icon(Icons.sunny),
+                          suffixText: AppStrings.get('lumen_unit', isArabic),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'مطلوب';
+                            return AppStrings.get('required_field', isArabic);
                           }
                           final val = double.tryParse(value);
                           if (val == null || val <= 0) {
-                            return 'قيمة غير صالحة';
+                            return AppStrings.get('invalid_value', isArabic);
                           }
                           return null;
                         },
@@ -425,19 +428,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       child: TextFormField(
                         controller: _wattageController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'قدرة اللمبة (Watt)',
-                          hintText: '9',
-                          prefixIcon: Icon(Icons.electric_bolt_rounded),
-                          suffixText: 'W',
+                        decoration: InputDecoration(
+                          labelText: AppStrings.get('watt_label', isArabic),
+                          hintText: AppStrings.get('watt_hint', isArabic),
+                          prefixIcon: const Icon(Icons.electric_bolt_rounded),
+                          suffixText: AppStrings.get('watt_unit', isArabic),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'مطلوب';
+                            return AppStrings.get('required_field', isArabic);
                           }
                           final val = double.tryParse(value);
                           if (val == null || val <= 0) {
-                            return 'قيمة غير صالحة';
+                            return AppStrings.get('invalid_value', isArabic);
                           }
                           return null;
                         },
@@ -452,9 +455,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 ElevatedButton.icon(
                   onPressed: _onCalculate,
                   icon: const Icon(Icons.calculate_rounded, size: 22),
-                  label: const Text(
-                    'احسب الإضاءة المطلوبة',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  label: Text(
+                    AppStrings.get('btn_calculate_lighting', isArabic),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -477,7 +480,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 // شريط مختصر إذا كان هناك غرف مضافة في المشروع
                 if (provider.totalRoomsCount > 0) ...[
                   const SizedBox(height: 20),
-                  _buildProjectQuickBar(context, provider),
+                  _buildProjectQuickBar(context, provider, isArabic),
                 ],
 
                 const SizedBox(height: 30),
@@ -489,7 +492,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  Widget _buildIntroBanner(BuildContext context) {
+  Widget _buildIntroBanner(BuildContext context, bool isArabic) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -513,7 +516,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'أدخل أبعاد الغرفة وشدة الإضاءة لحساب عدد اللمبات المناسب عملياً وإجمالي استهلاك الطاقة بدقة.',
+              AppStrings.get('lighting_banner', isArabic),
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
@@ -542,51 +545,60 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  Widget _buildRoomNameSelector(BuildContext context) {
+  Widget _buildRoomNameSelector(BuildContext context, bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          key: ValueKey(_selectedRoomPreset),
-          initialValue: _selectedRoomPreset,
-          decoration: const InputDecoration(
-            labelText: 'اسم الغرفة',
-            prefixIcon: Icon(Icons.door_front_door_outlined),
+        DropdownButtonFormField<String?>(
+          key: ValueKey(_selectedRoomKey),
+          value: _selectedRoomKey,
+          decoration: InputDecoration(
+            labelText: AppStrings.get('room_name_label', isArabic),
+            prefixIcon: const Icon(Icons.door_front_door_outlined),
+            hintText: isArabic ? 'اختر نوع الغرفة (اختياري)' : 'Select Room Type (Optional)',
           ),
-          items: _commonRooms.map((room) {
-            return DropdownMenuItem(
-              value: room,
-              child: Text(room),
-            );
-          }).toList(),
+          items: [
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(isArabic ? '— تخصيص اسم يدوي —' : '— Custom Name —'),
+            ),
+            ..._roomPresets.map((room) {
+              final key = room['key']!;
+              return DropdownMenuItem<String?>(
+                value: key,
+                child: Text(AppStrings.get(key, isArabic)),
+              );
+            }),
+          ],
           onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _selectedRoomPreset = value;
-                _isCustomRoomName = (value == 'أخرى (مخصص)');
-                if (!_isCustomRoomName) {
-                  _nameController.text = value;
-                  // اقتراح لوكس تلقائي حسب المعيار
-                  _autoSuggestLux(value);
-                } else {
-                  _nameController.clear();
+            setState(() {
+              _selectedRoomKey = value;
+              if (value == null || value == 'room_other') {
+                _isCustomRoomName = true;
+                _nameController.clear();
+              } else {
+                _isCustomRoomName = false;
+                _nameController.text = AppStrings.get(value, isArabic);
+                final found = _roomPresets.firstWhere((r) => r['key'] == value, orElse: () => {'lux': ''});
+                if (found['lux'] != null && found['lux']!.isNotEmpty) {
+                  _luxController.text = found['lux']!;
                 }
-              });
-            }
+              }
+            });
           },
         ),
-        if (_isCustomRoomName) ...[
+        if (_isCustomRoomName || _selectedRoomKey == null) ...[
           const SizedBox(height: 10),
           TextFormField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'اكتب اسم الغرفة المخصص',
-              hintText: 'مثال: صالة الاستقبال',
-              prefixIcon: Icon(Icons.edit_note_rounded),
+            decoration: InputDecoration(
+              labelText: AppStrings.get('custom_room_label', isArabic),
+              hintText: AppStrings.get('custom_room_hint', isArabic),
+              prefixIcon: const Icon(Icons.edit_note_rounded),
             ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'يرجى إدخال اسم الغرفة';
+              if ((value == null || value.trim().isEmpty) && _selectedRoomKey == null) {
+                return AppStrings.get('enter_room_name', isArabic);
               }
               return null;
             },
@@ -596,39 +608,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  void _autoSuggestLux(String room) {
-    switch (room) {
-      case 'غرفة النوم':
-        _luxController.text = '150';
-        break;
-      case 'غرفة المعيشة':
-        _luxController.text = '200';
-        break;
-      case 'المطبخ':
-        _luxController.text = '350';
-        break;
-      case 'المكتب / الدراسة':
-        _luxController.text = '450';
-        break;
-      case 'الحمامات':
-        _luxController.text = '250';
-        break;
-      case 'الممرات والمداخل':
-        _luxController.text = '120';
-        break;
-      case 'غرفة الطعام':
-        _luxController.text = '200';
-        break;
-    }
-  }
-
-  Widget _buildLuxPresetChips() {
+  Widget _buildLuxPresetChips(bool isArabic) {
     final presets = [
-      {'label': '100 Lux (ممرات)', 'val': '100'},
-      {'label': '150 Lux (نوم)', 'val': '150'},
-      {'label': '200 Lux (معيشة/طعام)', 'val': '200'},
-      {'label': '350 Lux (مطبخ)', 'val': '350'},
-      {'label': '450 Lux (مكتب)', 'val': '450'},
+      {'label': isArabic ? '100 لوكس (ممرات)' : '100 Lux (Corridors)', 'val': '100'},
+      {'label': isArabic ? '150 لوكس (نوم)' : '150 Lux (Bedroom)', 'val': '150'},
+      {'label': isArabic ? '200 لوكس (معيشة/طعام)' : '200 Lux (Living)', 'val': '200'},
+      {'label': isArabic ? '350 لوكس (مطبخ)' : '350 Lux (Kitchen)', 'val': '350'},
+      {'label': isArabic ? '450 لوكس (مكتب)' : '450 Lux (Office)', 'val': '450'},
     ];
 
     return Wrap(
@@ -651,13 +637,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  Widget _buildBulbPresetChips() {
+  Widget _buildBulbPresetChips(bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'خيارات لمبات LED جاهزة:',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
+        Text(
+          AppStrings.get('bulb_presets_label', isArabic),
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -688,7 +674,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  Widget _buildProjectQuickBar(BuildContext context, LightingProvider provider) {
+  Widget _buildProjectQuickBar(BuildContext context, LightingProvider provider, bool isArabic) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -707,11 +693,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'مشروع المنزل الحالي (${provider.totalRoomsCount} غرف)',
+                  '${AppStrings.get('quick_project_bar_title', isArabic)} (${provider.totalRoomsCount} ${AppStrings.get('rooms_word', isArabic)})',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 Text(
-                  'إجمالي القدرة: ${provider.totalProjectWattage.toStringAsFixed(0)} واط | اللمبات: ${provider.totalProjectBulbs}',
+                  '${AppStrings.get('total_power', isArabic)} ${provider.totalProjectWattage.toStringAsFixed(0)} ${AppStrings.get('watt_word', isArabic)} | ${AppStrings.get('bulbs_word', isArabic)} ${provider.totalProjectBulbs}',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ],
@@ -720,7 +706,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           TextButton.icon(
             onPressed: widget.onNavigateToProject,
             icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-            label: const Text('عرض المشروع'),
+            label: Text(AppStrings.get('quick_project_bar_view', isArabic)),
           ),
         ],
       ),

@@ -78,9 +78,9 @@ class StandardsGuideScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // عنوان القائمة
-                  const Text(
-                    'المعايير الموصى بها لكل فراغ منزلي:',
-                    style: TextStyle(
+                  Text(
+                    AppStrings.get('standards_list_title', isArabic),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -96,7 +96,11 @@ class StandardsGuideScreen extends StatelessWidget {
                         onSelectStandard();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('تم تطبيق معايير "${standard.roomName}" في الحاسبة'),
+                            content: Text(
+                              isArabic
+                                  ? 'تم تطبيق معايير "${standard.getRoomName(true)}" في الحاسبة'
+                                  : 'Applied "${standard.getRoomName(false)}" standards to calculator',
+                            ),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: AppTheme.primaryDarkAmber,
                             duration: const Duration(seconds: 2),
@@ -118,6 +122,7 @@ class StandardsGuideScreen extends StatelessWidget {
 
   Widget _buildIntroCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = context.watch<LightingProvider>().isArabic;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -148,16 +153,18 @@ class StandardsGuideScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'المواصفات القياسية (CIBSE / EN 12464)',
-                  style: TextStyle(
+                Text(
+                  isArabic ? 'المواصفات القياسية (CIBSE / EN 12464)' : 'Standard Specifications (CIBSE / EN 12464)',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'تحدد هذه المعايير الهندسية كمية الإضاءة (Lux = لومين لكل م²) وحرارة اللون المناسبة لضمان الراحة البصرية، الحفاظ على سلامة العين، وترشيد استهلاك الطاقة.',
+                  isArabic
+                      ? 'تحدد هذه المعايير الهندسية كمية الإضاءة (Lux = لومين لكل م²) وحرارة اللون المناسبة لضمان الراحة البصرية، الحفاظ على سلامة العين، وترشيد استهلاك الطاقة.'
+                      : 'These engineering standards establish required illuminance (Lux = lm/m²) and color temperature to ensure visual comfort, eye safety, and energy efficiency.',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.45,
@@ -174,6 +181,7 @@ class StandardsGuideScreen extends StatelessWidget {
 
   Widget _buildKelvinExplainerCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = context.watch<LightingProvider>().isArabic;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -187,13 +195,13 @@ class StandardsGuideScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.palette_outlined, size: 18, color: AppTheme.primaryDarkAmber),
-              SizedBox(width: 8),
+              const Icon(Icons.palette_outlined, size: 18, color: AppTheme.primaryDarkAmber),
+              const SizedBox(width: 8),
               Text(
-                'دليل درجات حرارة اللون (Kelvin):',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                isArabic ? 'دليل درجات حرارة اللون (Kelvin):' : 'Color Temperature Guide (Kelvin):',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ],
           ),
@@ -203,21 +211,21 @@ class StandardsGuideScreen extends StatelessWidget {
               _buildKelvinIndicator(
                 context,
                 title: '2700K - 3000K',
-                desc: 'أصفر دافئ (استرخاء)',
+                desc: isArabic ? 'أصفر دافئ (استرخاء)' : 'Warm Yellow (Relax)',
                 color: const Color(0xFFF59E0B),
               ),
               const SizedBox(width: 8),
               _buildKelvinIndicator(
                 context,
                 title: '4000K',
-                desc: 'أبيض طبيعي (توازن)',
+                desc: isArabic ? 'أبيض طبيعي (توازن)' : 'Natural White (Balance)',
                 color: const Color(0xFF10B981),
               ),
               const SizedBox(width: 8),
               _buildKelvinIndicator(
                 context,
                 title: '5000K+',
-                desc: 'أبيض نهاري (تركيز)',
+                desc: isArabic ? 'أبيض نهاري (تركيز)' : 'Cool Daylight (Focus)',
                 color: const Color(0xFF3B82F6),
               ),
             ],

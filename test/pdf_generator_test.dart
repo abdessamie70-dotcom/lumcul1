@@ -44,6 +44,18 @@ void main() {
 
   test('PdfGenerator generates valid English-only cable sizing report bytes', () async {
     final cableProvider = CableSizingProvider();
+    cableProvider.calculate(
+      phase: '1-Phase',
+      voltage: 230.0,
+      loadValue: 3.5,
+      loadType: 'kW',
+      powerFactor: 0.85,
+      length: 25.0,
+      material: 'Copper',
+      maxDeltaVPct: 3.0,
+      correctionFactorK: 0.87,
+      insulation: 'PVC',
+    );
     final result = cableProvider.result!;
 
     final bytes = await PdfGenerator.generateCableReportPdf(
