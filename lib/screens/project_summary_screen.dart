@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/lighting_provider.dart';
+import '../providers/cable_sizing_provider.dart';
 import '../widgets/room_card.dart';
 import '../utils/app_theme.dart';
+import '../utils/pdf_generator.dart';
 
 class ProjectSummaryScreen extends StatelessWidget {
   final VoidCallback onAddRoom;
@@ -34,6 +36,17 @@ class ProjectSummaryScreen extends StatelessWidget {
             onPressed: () => provider.toggleTheme(),
           ),
           if (provider.totalRoomsCount > 0) ...[
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded, color: AppTheme.primaryAmber),
+              tooltip: 'تحميل تقرير PDF (عربي / English)',
+              onPressed: () {
+                PdfGenerator.showPdfOptionsModal(
+                  context: context,
+                  lightingProvider: provider,
+                  cableProvider: context.read<CableSizingProvider>(),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.copy_all_rounded),
               tooltip: 'نسخ تقرير المشروع',
@@ -98,7 +111,31 @@ class ProjectSummaryScreen extends StatelessWidget {
                           return RoomCard(room: room);
                         }),
 
-                        const SizedBox(height: 16),
+                        // زر تحميل تقرير PDF ثنائي اللغة للمشروع
+                        FilledButton.icon(
+                          onPressed: () {
+                            PdfGenerator.showPdfOptionsModal(
+                              context: context,
+                              lightingProvider: provider,
+                              cableProvider: context.read<CableSizingProvider>(),
+                            );
+                          },
+                          icon: const Icon(Icons.picture_as_pdf_rounded),
+                          label: const Text(
+                            'تحميل تقرير المشروع PDF (عربي / English)',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppTheme.primaryDarkAmber,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
 
                         // زر نسخ التقرير النصي
                         OutlinedButton.icon(

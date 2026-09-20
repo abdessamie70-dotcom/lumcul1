@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/cable_calculation_result.dart';
+import '../providers/cable_sizing_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/pdf_generator.dart';
 
 class CableResultCard extends StatelessWidget {
   final CableCalculationResult result;
@@ -220,6 +223,31 @@ class CableResultCard extends StatelessWidget {
                     isValid: cable.section >= result.minSectionForVoltageDropMinS,
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // زر تحميل تقرير الكابل PDF
+            OutlinedButton.icon(
+              onPressed: () {
+                PdfGenerator.previewAndSaveCablePdf(
+                  context: context,
+                  result: result,
+                  provider: context.read<CableSizingProvider>(),
+                );
+              },
+              icon: const Icon(Icons.picture_as_pdf_rounded, color: AppTheme.accentBlue),
+              label: const Text(
+                'تحميل تقرير الحساب الهندسي للكابل PDF (عربي / English)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                side: const BorderSide(color: AppTheme.accentBlue),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ],
