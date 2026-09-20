@@ -9,22 +9,22 @@ import '../models/room_model.dart';
 import '../providers/cable_sizing_provider.dart';
 import '../providers/lighting_provider.dart';
 
-/// فئة مسؤولة عن إنشاء وتوليد تقارير PDF هندسية ثنائية اللغة (عربي / إنجليزي)
+/// Professional English-only PDF Generator according to IEC 60364-5-52 and CIBSE standards
 class PdfGenerator {
-  /// توليد ملف PDF شامل لمشروع الإنارة وتمديدات الكابلات (Bilingual: Arabic & English)
+  /// Generate comprehensive English Project PDF Report
   static Future<Uint8List> generateProjectPdf({
     required LightingProvider lightingProvider,
     CableSizingProvider? cableProvider,
   }) async {
     final pdf = pw.Document(
-      title: 'Lighting & Electrical Cable Sizing Engineering Report',
+      title: 'Electrical Installation and Cable Sizing Engineering Report',
       author: 'BOUGHABA ABDESSAMIE',
-      subject: 'Home Lighting & Cable Sizing Bilingual Engineering Report',
+      subject: 'Lighting and Cable Sizing Engineering Report',
     );
 
-    // تحميل خط Cairo العربي الذي يدعم العربية والإنجليزية بتناسق
-    final cairoRegular = await PdfGoogleFonts.cairoRegular();
-    final cairoBold = await PdfGoogleFonts.cairoBold();
+    // Standard high-quality fonts for English engineering reports
+    final regularFont = await PdfGoogleFonts.interRegular();
+    final boldFont = await PdfGoogleFonts.interBold();
 
     final now = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(now);
@@ -43,10 +43,10 @@ class PdfGenerator {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(26),
       theme: pw.ThemeData.withFont(
-        base: cairoRegular,
-        bold: cairoBold,
+        base: regularFont,
+        bold: boldFont,
       ),
-      textDirection: pw.TextDirection.rtl,
+      textDirection: pw.TextDirection.ltr,
     );
 
     pdf.addPage(
@@ -55,17 +55,17 @@ class PdfGenerator {
         header: (pw.Context context) => _buildPdfHeader(
           context,
           formattedDate,
-          cairoRegular,
-          cairoBold,
+          regularFont,
+          boldFont,
         ),
         footer: (pw.Context context) => _buildPdfFooter(
           context,
-          cairoRegular,
-          cairoBold,
+          regularFont,
+          boldFont,
         ),
         build: (pw.Context context) {
           return [
-            // بطاقة الملخص التنفيذي الثنائي اللغة (Executive Summary Card)
+            // Executive Project Summary Card
             pw.Container(
               padding: const pw.EdgeInsets.all(12),
               decoration: pw.BoxDecoration(
@@ -79,23 +79,18 @@ class PdfGenerator {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'الملخص العام للمشروع / Executive Project Summary',
-                            style: pw.TextStyle(
-                              font: cairoBold,
-                              fontSize: 13,
-                              color: primaryDark,
-                            ),
-                          ),
-                        ],
+                      pw.Text(
+                        'EXECUTIVE PROJECT SUMMARY',
+                        style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 12,
+                          color: primaryDark,
+                        ),
                       ),
                       pw.Text(
-                        'إجمالي الغرف / Total Rooms: ${lightingProvider.totalRoomsCount}',
+                        'Total Rooms: ${lightingProvider.totalRoomsCount}',
                         style: pw.TextStyle(
-                          font: cairoBold,
+                          font: boldFont,
                           fontSize: 10,
                           color: slateDark,
                         ),
@@ -106,38 +101,34 @@ class PdfGenerator {
                   pw.Row(
                     children: [
                       _buildSummaryStat(
-                        titleAr: 'إجمالي المساحة',
-                        titleEn: 'Total Area',
+                        title: 'Total Area',
                         value: '${lightingProvider.totalProjectArea.toStringAsFixed(1)} m²',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: accentBlue,
                       ),
                       pw.SizedBox(width: 6),
                       _buildSummaryStat(
-                        titleAr: 'إجمالي اللومين',
-                        titleEn: 'Total Lumens',
+                        title: 'Total Lumens',
                         value: '${lightingProvider.totalProjectLumens.toStringAsFixed(0)} lm',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: primaryDark,
                       ),
                       pw.SizedBox(width: 6),
                       _buildSummaryStat(
-                        titleAr: 'إجمالي اللمبات',
-                        titleEn: 'Total Bulbs',
+                        title: 'Total Bulbs',
                         value: '${lightingProvider.totalProjectBulbs} Qty',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: accentGreen,
                       ),
                       pw.SizedBox(width: 6),
                       _buildSummaryStat(
-                        titleAr: 'إجمالي الاستهلاك',
-                        titleEn: 'Total Load',
+                        title: 'Total Load',
                         value: '${lightingProvider.totalProjectWattage.toStringAsFixed(0)} W (${totalKw.toStringAsFixed(2)} kW)',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: slateDark,
                       ),
                     ],
@@ -148,22 +139,22 @@ class PdfGenerator {
 
             pw.SizedBox(height: 14),
 
-            // عنوان جدول تفاصيل الغرف
+            // Room Lighting & Wiring Schedule Table
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'جدول تفاصيل الغرف ومواصفات الإنارة والأسلاك / Room Lighting & Wiring Schedule',
+                  'ROOM LIGHTING & WIRING SCHEDULE',
                   style: pw.TextStyle(
-                    font: cairoBold,
+                    font: boldFont,
                     fontSize: 11,
                     color: slateDark,
                   ),
                 ),
                 pw.Text(
-                  'CIBSE / EN 12464 Standards',
+                  'Standards: CIBSE / EN 12464',
                   style: pw.TextStyle(
-                    font: cairoRegular,
+                    font: regularFont,
                     fontSize: 8.5,
                     color: PdfColors.grey700,
                   ),
@@ -172,30 +163,29 @@ class PdfGenerator {
             ),
             pw.SizedBox(height: 6),
 
-            // جدول الغرف ثنائي اللغة
             _buildRoomsTable(
               rooms: lightingProvider.projectRooms,
-              cairoRegular: cairoRegular,
-              cairoBold: cairoBold,
+              regularFont: regularFont,
+              boldFont: boldFont,
               primaryAmber: primaryAmber,
               slateBorder: slateBorder,
             ),
 
             pw.SizedBox(height: 14),
 
-            // قسم حساب الكابل إذا كان متوفراً (Bilingual Cable Sizing Section)
+            // Associated Cable Sizing Section (IEC 60364-5-52)
             if (cableProvider?.result != null) ...[
               _buildCableSection(
                 cableProvider: cableProvider!,
-                cairoRegular: cairoRegular,
-                cairoBold: cairoBold,
+                regularFont: regularFont,
+                boldFont: boldFont,
                 accentBlue: accentBlue,
                 slateBorder: slateBorder,
               ),
               pw.SizedBox(height: 14),
             ],
 
-            // بطاقة التوصيات والملاحظات الهندسية ثنائية اللغة
+            // Technical & Engineering Recommendations
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -207,27 +197,27 @@ class PdfGenerator {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'التوصيات الهندسية والمعايير المعتمدة / Technical & Engineering Standards:',
+                    'TECHNICAL & ENGINEERING STANDARDS COMPLIANCE:',
                     style: pw.TextStyle(
-                      font: cairoBold,
+                      font: boldFont,
                       fontSize: 9.5,
                       color: primaryDark,
                     ),
                   ),
                   pw.SizedBox(height: 4),
                   pw.Text(
-                    '- تم احتساب اللومين المطلوب بمعامل فواقد وامتصاص (Loss & Utilization Factor = 2) لضمان تحقيق شدة الإضاءة الفعلية.\n  Total required lumens calculated with Loss & Utilization factor = 2 (CIBSE / EN 12464).',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                    '- Total required lumens calculated with Loss & Utilization factor = 2 (CIBSE / EN 12464).',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    '- دوائر الإنارة المنزلية القياسية تنفذ بأسلاك نحاسية مقطع 1.5 مم² مع قاطع حماية 10A MCB.\n  Standard residential lighting circuits use 1.5 mm² Copper conductors protected by 10A MCB.',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                    '- Standard residential lighting circuits use 1.5 mm² Copper conductors protected by 10A MCB.',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    '- حساب مقطع الكابل يعتمد على هبوط الجهد الأقصى المسموح به وسعة التيار الحرارية مع معاملات التصحيح (IEC).\n  Cable sizing is verified against maximum allowable voltage drop and thermal ampacity with correction factors (IEC).',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                    '- Cable sizing verified against permissible voltage drop and thermal ampacity with IEC 60364-5-52 correction factors.',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                 ],
               ),
@@ -240,19 +230,19 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  /// توليد تقرير PDF مخصص لحساب مقطع السلك والكابل الكهربائي ثنائي اللغة
+  /// Generate standalone English Cable Sizing Engineering Report
   static Future<Uint8List> generateCableReportPdf({
     required CableCalculationResult result,
     required CableSizingProvider provider,
   }) async {
     final pdf = pw.Document(
-      title: 'Electrical Cable & Wire Sizing Engineering Report',
+      title: 'Electrical Cable and Wire Sizing Engineering Report',
       author: 'BOUGHABA ABDESSAMIE',
-      subject: 'Bilingual Electrical Cable Sizing Engineering Report',
+      subject: 'Cable Sizing Engineering Calculation Report',
     );
 
-    final cairoRegular = await PdfGoogleFonts.cairoRegular();
-    final cairoBold = await PdfGoogleFonts.cairoBold();
+    final regularFont = await PdfGoogleFonts.interRegular();
+    final boldFont = await PdfGoogleFonts.interBold();
     final now = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(now);
 
@@ -266,10 +256,10 @@ class PdfGenerator {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(26),
       theme: pw.ThemeData.withFont(
-        base: cairoRegular,
-        bold: cairoBold,
+        base: regularFont,
+        bold: boldFont,
       ),
-      textDirection: pw.TextDirection.rtl,
+      textDirection: pw.TextDirection.ltr,
     );
 
     final sectionStr = result.selectedCable != null
@@ -284,35 +274,31 @@ class PdfGenerator {
         header: (pw.Context context) => _buildPdfHeader(
           context,
           formattedDate,
-          cairoRegular,
-          cairoBold,
+          regularFont,
+          boldFont,
         ),
         footer: (pw.Context context) => _buildPdfFooter(
           context,
-          cairoRegular,
-          cairoBold,
+          regularFont,
+          boldFont,
         ),
         build: (pw.Context context) {
           return [
             pw.Text(
-              'تقرير الحساب الهندسي لمقطع السلك والكابل الكهربائي',
-              style: pw.TextStyle(font: cairoBold, fontSize: 15, color: accentBlue),
-            ),
-            pw.Text(
-              'Electrical Cable & Wire Sizing Engineering Calculation Report',
-              style: pw.TextStyle(font: cairoBold, fontSize: 11, color: slateDark),
+              'ELECTRICAL CABLE & WIRE SIZING ENGINEERING REPORT',
+              style: pw.TextStyle(font: boldFont, fontSize: 14, color: accentBlue),
             ),
             pw.SizedBox(height: 2),
             pw.Text(
-              'وفقاً لمعايير هبوط الجهد وسعة التحمل الحرارية / According to IEC Voltage Drop & Ampacity Standards',
-              style: pw.TextStyle(font: cairoRegular, fontSize: 8.5, color: PdfColors.grey700),
+              'Calculation according to IEC 60364-5-52 Voltage Drop & Thermal Ampacity Standards',
+              style: pw.TextStyle(font: regularFont, fontSize: 8.5, color: PdfColors.grey700),
             ),
             pw.SizedBox(height: 12),
 
-            // جدول المدخلات الهندسية ثنائي اللغة
+            // 1. Input Engineering Parameters Table
             pw.Text(
-              '1. معطيات ومدخلات الحساب / Input Engineering Parameters:',
-              style: pw.TextStyle(font: cairoBold, fontSize: 11, color: slateDark),
+              '1. INPUT ENGINEERING PARAMETERS:',
+              style: pw.TextStyle(font: boldFont, fontSize: 10.5, color: slateDark),
             ),
             pw.SizedBox(height: 6),
             pw.Table(
@@ -321,35 +307,52 @@ class PdfGenerator {
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF1F5F9)),
                   children: [
-                    _buildTableCell('نظام التغذية\nPhase System', isHeader: true, font: cairoBold),
-                    _buildTableCell(provider.phase, font: cairoRegular),
-                    _buildTableCell('الجهد الاسمي\nVoltage (V)', isHeader: true, font: cairoBold),
-                    _buildTableCell('${provider.voltage.toStringAsFixed(0)} V', font: cairoRegular),
+                    _buildTableCell('Phase System', isHeader: true, font: boldFont),
+                    _buildTableCell(provider.phase, font: regularFont),
+                    _buildTableCell('Nominal Voltage (V)', isHeader: true, font: boldFont),
+                    _buildTableCell('${provider.voltage.toStringAsFixed(0)} V', font: regularFont),
                   ],
                 ),
                 pw.TableRow(
                   children: [
-                    _buildTableCell('قيمة الحمل\nLoad Value', isHeader: true, font: cairoBold),
-                    _buildTableCell('${provider.loadValue} ${provider.loadType}', font: cairoRegular),
-                    _buildTableCell('معامل القدرة\nPower Factor (cos φ)', isHeader: true, font: cairoBold),
-                    _buildTableCell(provider.loadType == 'kW' ? provider.powerFactor.toStringAsFixed(2) : '-', font: cairoRegular),
+                    _buildTableCell('Load Value', isHeader: true, font: boldFont),
+                    _buildTableCell('${provider.loadValue} ${provider.loadType}', font: regularFont),
+                    _buildTableCell('Power Factor (cos phi)', isHeader: true, font: boldFont),
+                    _buildTableCell(provider.loadType == 'kW' ? provider.powerFactor.toStringAsFixed(2) : '-', font: regularFont),
                   ],
                 ),
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF1F5F9)),
                   children: [
-                    _buildTableCell('طول الخط\nLine Length (m)', isHeader: true, font: cairoBold),
-                    _buildTableCell('${provider.length.toStringAsFixed(0)} m', font: cairoRegular),
-                    _buildTableCell('مادة الموصل\nConductor Material', isHeader: true, font: cairoBold),
-                    _buildTableCell(provider.material == 'Copper' ? 'نحاس (Copper)' : 'ألمنيوم (Aluminum)', font: cairoRegular),
+                    _buildTableCell('Conductor Material', isHeader: true, font: boldFont),
+                    _buildTableCell('${provider.material} (gamma = ${provider.material == "Copper" ? 56 : 35})', font: regularFont),
+                    _buildTableCell('Insulation Type', isHeader: true, font: boldFont),
+                    _buildTableCell('${result.insulation} (${result.insulation == "XLPE" ? "90°C" : "70°C"})', font: regularFont),
                   ],
                 ),
                 pw.TableRow(
                   children: [
-                    _buildTableCell('أقصى هبوط مسموح\nMax ΔV (%)', isHeader: true, font: cairoBold),
-                    _buildTableCell('${provider.maxDeltaVPct}% (${(provider.voltage * provider.maxDeltaVPct / 100).toStringAsFixed(1)} V)', font: cairoRegular),
-                    _buildTableCell('معامل التصحيح\nCorrection Factor (K)', isHeader: true, font: cairoBold),
-                    _buildTableCell(provider.correctionFactorK.toStringAsFixed(2), font: cairoRegular),
+                    _buildTableCell('Installation Method', isHeader: true, font: boldFont),
+                    _buildTableCell(result.installationMethod, font: regularFont),
+                    _buildTableCell('Cable Core Structure', isHeader: true, font: boldFont),
+                    _buildTableCell(result.coreType, font: regularFont),
+                  ],
+                ),
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF1F5F9)),
+                  children: [
+                    _buildTableCell('Operating Temperature', isHeader: true, font: boldFont),
+                    _buildTableCell('${result.temperature.toStringAsFixed(0)} °C (K_temp = ${result.temperatureFactorKtemp.toStringAsFixed(2)})', font: regularFont),
+                    _buildTableCell('Adjacent Circuits (Grouping)', isHeader: true, font: boldFont),
+                    _buildTableCell('${result.groupingCircuitsCount} Circuit(s) (K_group = ${result.groupingFactorKgroup.toStringAsFixed(2)})', font: regularFont),
+                  ],
+                ),
+                pw.TableRow(
+                  children: [
+                    _buildTableCell('Line Length (m)', isHeader: true, font: boldFont),
+                    _buildTableCell('${provider.length.toStringAsFixed(0)} m', font: regularFont),
+                    _buildTableCell('Max Allowable Delta V (%)', isHeader: true, font: boldFont),
+                    _buildTableCell('${provider.maxDeltaVPct}% (${(provider.voltage * provider.maxDeltaVPct / 100).toStringAsFixed(1)} V)', font: regularFont),
                   ],
                 ),
               ],
@@ -357,10 +360,10 @@ class PdfGenerator {
 
             pw.SizedBox(height: 14),
 
-            // بطاقة النتائج الهندسية المعتمدة
+            // 2. Approved Engineering Results
             pw.Text(
-              '2. النتائج الهندسية المعتمدة / Approved Engineering Results:',
-              style: pw.TextStyle(font: cairoBold, fontSize: 11, color: slateDark),
+              '2. APPROVED ENGINEERING RESULTS:',
+              style: pw.TextStyle(font: boldFont, fontSize: 10.5, color: slateDark),
             ),
             pw.SizedBox(height: 6),
             pw.Container(
@@ -374,21 +377,21 @@ class PdfGenerator {
                 children: [
                   pw.Row(
                     children: [
-                      _buildBilingualResultBox(
-                        titleAr: 'تيار التصميم (Ib)',
-                        titleEn: 'Design Current',
+                      _buildEnglishResultBox(
+                        title: 'Design Current (Ib)',
+                        subtitle: 'Operating Load Current',
                         value: '${result.designCurrentIb.toStringAsFixed(2)} A',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: accentBlue,
                       ),
                       pw.SizedBox(width: 8),
-                      _buildBilingualResultBox(
-                        titleAr: 'الحد الأدنى لمقطع السلك (Min S)',
-                        titleEn: 'Min Section (ΔV)',
+                      _buildEnglishResultBox(
+                        title: 'Min Section for Delta V (Min S)',
+                        subtitle: 'To satisfy ${provider.maxDeltaVPct}% drop limit',
                         value: '${result.minSectionForVoltageDropMinS.toStringAsFixed(2)} mm²',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: primaryAmber,
                       ),
                     ],
@@ -396,22 +399,22 @@ class PdfGenerator {
                   pw.SizedBox(height: 8),
                   pw.Row(
                     children: [
-                      _buildBilingualResultBox(
-                        titleAr: 'المقطع الموصى به (Recommended)',
-                        titleEn: 'Recommended Cable Cross-Section',
-                        value: result.selectedCable != null ? '$sectionStr mm²' : 'يتطلب كابلات توازي / Parallel',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                      _buildEnglishResultBox(
+                        title: 'RECOMMENDED CROSS-SECTION',
+                        subtitle: 'Selected from IEC standard table',
+                        value: result.selectedCable != null ? '$sectionStr mm²' : 'Requires Parallel Cables',
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: accentGreen,
                         isLarge: true,
                       ),
                       pw.SizedBox(width: 8),
-                      _buildBilingualResultBox(
-                        titleAr: 'السعة النهائية للكابل (Iz)',
-                        titleEn: 'Final Cable Capacity (Raw × K)',
+                      _buildEnglishResultBox(
+                        title: 'Final Cable Capacity (Iz)',
+                        subtitle: 'Raw Capacity (${result.cableCapacity?.toStringAsFixed(1)}A) x K (${result.correctionFactorK.toStringAsFixed(2)})',
                         value: result.finalCableCapacityIz != null ? '${result.finalCableCapacityIz!.toStringAsFixed(2)} A' : '-',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: slateDark,
                       ),
                     ],
@@ -419,23 +422,23 @@ class PdfGenerator {
                   pw.SizedBox(height: 8),
                   pw.Row(
                     children: [
-                      _buildBilingualResultBox(
-                        titleAr: 'هبوط الجهد الفعلي (Actual ΔV)',
-                        titleEn: 'Actual Voltage Drop',
+                      _buildEnglishResultBox(
+                        title: 'Actual Voltage Drop',
+                        subtitle: 'Max limit: ${provider.maxDeltaVPct}%',
                         value: result.actualDeltaVPct != null
                             ? '${result.actualDeltaVPct!.toStringAsFixed(2)}% (${result.actualDeltaVVolts?.toStringAsFixed(2)} V)'
                             : '-',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: slateDark,
                       ),
                       pw.SizedBox(width: 8),
-                      _buildBilingualResultBox(
-                        titleAr: 'القاطع الموصى به (Breaker)',
-                        titleEn: 'Recommended Circuit Breaker',
-                        value: result.suggestedBreakerAmps != null ? '${result.suggestedBreakerAmps} A MCB/MCCB' : '-',
-                        font: cairoRegular,
-                        boldFont: cairoBold,
+                      _buildEnglishResultBox(
+                        title: 'Recommended Circuit Breaker',
+                        subtitle: 'Standard MCB / MCCB Rating',
+                        value: result.suggestedBreakerAmps != null ? '${result.suggestedBreakerAmps} A' : '-',
+                        font: regularFont,
+                        boldFont: boldFont,
                         color: primaryAmber,
                       ),
                     ],
@@ -446,7 +449,7 @@ class PdfGenerator {
 
             pw.SizedBox(height: 14),
 
-            // المعادلات الهندسية المستخدمة ثنائية اللغة
+            // 3. Mathematical Formulas Applied (IEC 60364-5-52)
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -458,29 +461,33 @@ class PdfGenerator {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'المعادلات الرياضية المطبقة في الحساب / Mathematical Formulas Applied:',
-                    style: pw.TextStyle(font: cairoBold, fontSize: 9.5, color: slateDark),
+                    'MATHEMATICAL FORMULAS APPLIED (IEC 60364-5-52):',
+                    style: pw.TextStyle(font: boldFont, fontSize: 9.5, color: slateDark),
                   ),
                   pw.SizedBox(height: 4),
                   pw.Text(
                     provider.phase == '1-Phase'
-                        ? '- 1-Phase Design Current: Ib = (P × 1000) / (V × cos φ)'
-                        : '- 3-Phase Design Current: Ib = (P × 1000) / (√3 × V × cos φ)',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                        ? '- Design Current: Ib = (P x 1000) / (V x cos phi)'
+                        : '- Design Current: Ib = (P x 1000) / (sqrt(3) x V x cos phi)',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                   pw.Text(
-                    '- Required Nominal Ampacity: Iz_required = Ib / K',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                    '- Total Correction Factor: Total K = K_temp x K_group = ${result.temperatureFactorKtemp.toStringAsFixed(2)} x ${result.groupingFactorKgroup.toStringAsFixed(2)} = ${result.correctionFactorK.toStringAsFixed(2)}',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
+                  ),
+                  pw.Text(
+                    '- Required Nominal Ampacity: Iz_required = Ib / Total K',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                   pw.Text(
                     provider.phase == '1-Phase'
-                        ? '- 1-Phase Min Cross-Section: Min S = (2 × L × Ib × cos φ) / (γ × Max ΔV)'
-                        : '- 3-Phase Min Cross-Section: Min S = (√3 × L × Ib × cos φ) / (γ × Max ΔV)',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                        ? '- Voltage Drop Min Section: Min S = (2 x L x Ib x cos phi) / (gamma x Max Delta V)'
+                        : '- Voltage Drop Min Section: Min S = (sqrt(3) x L x Ib x cos phi) / (gamma x Max Delta V)',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                   pw.Text(
-                    '- Electrical Conductivity γ: Copper = 56 m/(Ohm·mm²) | Aluminum = 35 m/(Ohm·mm²)',
-                    style: pw.TextStyle(font: cairoRegular, fontSize: 8),
+                    '- Conductivity gamma: Copper = 56 m/(Ohm.mm²) | Aluminum = 35 m/(Ohm.mm²)',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
                 ],
               ),
@@ -493,7 +500,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  /// معاينة وطباعة أو حفظ ملف PDF للمشروع
+  /// Preview, print or save Project PDF
   static Future<void> previewAndSaveProjectPdf({
     required BuildContext context,
     required LightingProvider lightingProvider,
@@ -505,12 +512,12 @@ class PdfGenerator {
     );
 
     await Printing.layoutPdf(
-      name: 'تقرير_مشروع_الإنارة_والكهرباء.pdf',
+      name: 'Electrical_Project_Report.pdf',
       onLayout: (PdfPageFormat format) async => pdfBytes,
     );
   }
 
-  /// مشاركة ملف PDF مباشرة للمشروع (Share Sheet)
+  /// Share Project PDF directly
   static Future<void> shareProjectPdf({
     required BuildContext context,
     required LightingProvider lightingProvider,
@@ -523,11 +530,11 @@ class PdfGenerator {
 
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'تقرير_مشروع_الإنارة_والكهرباء.pdf',
+      filename: 'Electrical_Project_Report.pdf',
     );
   }
 
-  /// معاينة وطباعة تقرير الكابل المنفصل
+  /// Preview, print or save standalone Cable PDF
   static Future<void> previewAndSaveCablePdf({
     required BuildContext context,
     required CableCalculationResult result,
@@ -545,12 +552,12 @@ class PdfGenerator {
         : 'parallel';
 
     await Printing.layoutPdf(
-      name: 'تقرير_حساب_مقطع_الكابل_${sectionStr}mm2.pdf',
+      name: 'Cable_Sizing_Report_${sectionStr}mm2.pdf',
       onLayout: (PdfPageFormat format) async => pdfBytes,
     );
   }
 
-  /// مشاركة ملف تقرير الكابل المنفصل
+  /// Share standalone Cable PDF directly
   static Future<void> shareCablePdf({
     required BuildContext context,
     required CableCalculationResult result,
@@ -569,11 +576,11 @@ class PdfGenerator {
 
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'تقرير_حساب_مقطع_الكابل_${sectionStr}mm2.pdf',
+      filename: 'Cable_Sizing_Report_${sectionStr}mm2.pdf',
     );
   }
 
-  /// عرض نافذة خيارات تحميل ومشاركة ملف الـ PDF (Bottom Sheet)
+  /// Show PDF download options modal
   static void showPdfOptionsModal({
     required BuildContext context,
     required LightingProvider lightingProvider,
@@ -612,14 +619,14 @@ class PdfGenerator {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'تحميل تقرير المشروع (PDF)',
+                            'Download Project Report (PDF)',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'تقرير هندسي ثنائي اللغة (عربي / English)',
+                            'English Engineering Report • CIBSE & IEC Standards',
                             style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                         ],
@@ -630,8 +637,8 @@ class PdfGenerator {
                 const SizedBox(height: 20),
                 ListTile(
                   leading: const Icon(Icons.print_rounded, color: Color(0xFFD97706)),
-                  title: const Text('معاينة وحفظ / طباعة PDF'),
-                  subtitle: const Text('Preview, Save or Print PDF'),
+                  title: const Text('Preview, Save or Print PDF'),
+                  subtitle: const Text('Direct print preview and save to device'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   tileColor: Colors.amber.withValues(alpha: 0.08),
                   onTap: () {
@@ -646,8 +653,8 @@ class PdfGenerator {
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.share_rounded, color: Color(0xFF2563EB)),
-                  title: const Text('مشاركة ملف PDF مباشرة'),
-                  subtitle: const Text('Share PDF via WhatsApp, Email, etc.'),
+                  title: const Text('Share PDF File'),
+                  subtitle: const Text('Share PDF via WhatsApp, Email, or Files'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   tileColor: Colors.blue.withValues(alpha: 0.08),
                   onTap: () {
@@ -667,13 +674,13 @@ class PdfGenerator {
     );
   }
 
-  // --- دوال البناء المساعدة للـ PDF ---
+  // --- Helper Layout Widgets ---
 
   static pw.Widget _buildPdfHeader(
     pw.Context context,
     String formattedDate,
-    pw.Font cairoRegular,
-    pw.Font cairoBold,
+    pw.Font regularFont,
+    pw.Font boldFont,
   ) {
     const primaryDark = PdfColor.fromInt(0xFFB45309);
     const primaryAmber = PdfColor.fromInt(0xFFD97706);
@@ -694,26 +701,18 @@ class PdfGenerator {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'حاسبة الإضاءة وتمديدات الكابلات الكهربائية',
+                'ELECTRICAL INSTALLATION & CABLE SIZING ENGINEERING REPORT',
                 style: pw.TextStyle(
-                  font: cairoBold,
-                  fontSize: 15,
+                  font: boldFont,
+                  fontSize: 13,
                   color: primaryDark,
-                ),
-              ),
-              pw.Text(
-                'Home Lighting & Electrical Cable Sizing Report',
-                style: pw.TextStyle(
-                  font: cairoBold,
-                  fontSize: 10.5,
-                  color: const PdfColor.fromInt(0xFF334155),
                 ),
               ),
               pw.SizedBox(height: 2),
               pw.Text(
                 'by BOUGHABA ABDESSAMIE',
                 style: pw.TextStyle(
-                  font: cairoBold,
+                  font: boldFont,
                   fontSize: 9.5,
                   color: primaryAmber,
                   letterSpacing: 0.5,
@@ -725,17 +724,17 @@ class PdfGenerator {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                'تاريخ التقرير / Date: $formattedDate',
+                'Date: $formattedDate',
                 style: pw.TextStyle(
-                  font: cairoRegular,
+                  font: regularFont,
                   fontSize: 8,
                   color: PdfColors.grey700,
                 ),
               ),
               pw.Text(
-                'Standards: CIBSE / EN 12464 / IEC',
+                'Standards: IEC 60364-5-52 / CIBSE',
                 style: pw.TextStyle(
-                  font: cairoRegular,
+                  font: regularFont,
                   fontSize: 8,
                   color: PdfColors.grey600,
                 ),
@@ -749,8 +748,8 @@ class PdfGenerator {
 
   static pw.Widget _buildPdfFooter(
     pw.Context context,
-    pw.Font cairoRegular,
-    pw.Font cairoBold,
+    pw.Font regularFont,
+    pw.Font boldFont,
   ) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 10),
@@ -764,17 +763,17 @@ class PdfGenerator {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
-            'حاسبة الإنارة وتمديدات الكابلات - Developed by BOUGHABA ABDESSAMIE',
+            'Electrical Installation & Cable Sizing Calculator - Developed by BOUGHABA ABDESSAMIE',
             style: pw.TextStyle(
-              font: cairoRegular,
+              font: regularFont,
               fontSize: 8,
               color: PdfColors.grey600,
             ),
           ),
           pw.Text(
-            'صفحة ${context.pageNumber} من ${context.pagesCount} | Page ${context.pageNumber} of ${context.pagesCount}',
+            'Page ${context.pageNumber} of ${context.pagesCount}',
             style: pw.TextStyle(
-              font: cairoRegular,
+              font: regularFont,
               fontSize: 8,
               color: PdfColors.grey700,
             ),
@@ -785,8 +784,7 @@ class PdfGenerator {
   }
 
   static pw.Widget _buildSummaryStat({
-    required String titleAr,
-    required String titleEn,
+    required String title,
     required String value,
     required pw.Font font,
     required pw.Font boldFont,
@@ -804,12 +802,8 @@ class PdfGenerator {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              titleAr,
-              style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey800),
-            ),
-            pw.Text(
-              titleEn,
-              style: pw.TextStyle(font: font, fontSize: 6.5, color: PdfColors.grey600),
+              title,
+              style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700),
             ),
             pw.SizedBox(height: 2),
             pw.Text(
@@ -828,30 +822,30 @@ class PdfGenerator {
 
   static pw.Widget _buildRoomsTable({
     required List<RoomCalculation> rooms,
-    required pw.Font cairoRegular,
-    required pw.Font cairoBold,
+    required pw.Font regularFont,
+    required pw.Font boldFont,
     required PdfColor primaryAmber,
     required PdfColor slateBorder,
   }) {
     return pw.Table(
       border: pw.TableBorder.all(color: slateBorder, width: 0.8),
       children: [
-        // صف العناوين ثنائي اللغة
+        // Header Row
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFD97706)),
           children: [
-            _buildTableHeader('#', cairoBold),
-            _buildTableHeader('الغرفة\nRoom', cairoBold),
-            _buildTableHeader('الأبعاد والمساحة\nDim. & Area', cairoBold),
-            _buildTableHeader('اللوكس\nLux', cairoBold),
-            _buildTableHeader('اللومين\nLumens', cairoBold),
-            _buildTableHeader('اللمبة\nLamp', cairoBold),
-            _buildTableHeader('العدد\nQty', cairoBold),
-            _buildTableHeader('الواط\nPower', cairoBold),
-            _buildTableHeader('السلك والقاطع\nWire & Breaker', cairoBold),
+            _buildTableHeader('#', boldFont),
+            _buildTableHeader('Room Name', boldFont),
+            _buildTableHeader('Dim. & Area', boldFont),
+            _buildTableHeader('Lux', boldFont),
+            _buildTableHeader('Lumens', boldFont),
+            _buildTableHeader('Lamp Type', boldFont),
+            _buildTableHeader('Qty', boldFont),
+            _buildTableHeader('Power', boldFont),
+            _buildTableHeader('Wire & Breaker', boldFont),
           ],
         ),
-        // صفوف الغرف
+        // Room Rows
         ...rooms.asMap().entries.map((entry) {
           final i = entry.key + 1;
           final r = entry.value;
@@ -861,15 +855,15 @@ class PdfGenerator {
               color: isEven ? PdfColors.white : const PdfColor.fromInt(0xFFF8FAFC),
             ),
             children: [
-              _buildTableCell('$i', font: cairoBold, align: pw.TextAlign.center),
-              _buildTableCell(r.name, font: cairoBold),
-              _buildTableCell('${r.length}×${r.width} (${r.area.toStringAsFixed(1)} m²)', font: cairoRegular),
-              _buildTableCell('${r.requiredLux.toInt()} lx', font: cairoRegular, align: pw.TextAlign.center),
-              _buildTableCell('${r.totalRequiredLumens.toStringAsFixed(0)} lm', font: cairoRegular, align: pw.TextAlign.center),
-              _buildTableCell('${r.bulbWattage.toInt()}W (${r.bulbLumen.toInt()}lm)', font: cairoRegular),
-              _buildTableCell('${r.practicalBulbs}', font: cairoBold, align: pw.TextAlign.center),
-              _buildTableCell('${r.totalWattage.toStringAsFixed(0)}W', font: cairoBold, align: pw.TextAlign.center),
-              _buildTableCell('1.5 mm² / 10A', font: cairoRegular, align: pw.TextAlign.center),
+              _buildTableCell('$i', font: boldFont, align: pw.TextAlign.center),
+              _buildTableCell(r.name, font: boldFont),
+              _buildTableCell('${r.length}x${r.width} (${r.area.toStringAsFixed(1)} m²)', font: regularFont),
+              _buildTableCell('${r.requiredLux.toInt()} lx', font: regularFont, align: pw.TextAlign.center),
+              _buildTableCell('${r.totalRequiredLumens.toStringAsFixed(0)} lm', font: regularFont, align: pw.TextAlign.center),
+              _buildTableCell('${r.bulbWattage.toInt()}W (${r.bulbLumen.toInt()}lm)', font: regularFont),
+              _buildTableCell('${r.practicalBulbs}', font: boldFont, align: pw.TextAlign.center),
+              _buildTableCell('${r.totalWattage.toStringAsFixed(0)} W', font: boldFont, align: pw.TextAlign.center),
+              _buildTableCell('1.5 mm² / 10A MCB', font: regularFont, align: pw.TextAlign.center),
             ],
           );
         }),
@@ -879,7 +873,7 @@ class PdfGenerator {
 
   static pw.Widget _buildTableHeader(String text, pw.Font font) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 5),
       child: pw.Text(
         text,
         textAlign: pw.TextAlign.center,
@@ -914,8 +908,8 @@ class PdfGenerator {
 
   static pw.Widget _buildCableSection({
     required CableSizingProvider cableProvider,
-    required pw.Font cairoRegular,
-    required pw.Font cairoBold,
+    required pw.Font regularFont,
+    required pw.Font boldFont,
     required PdfColor accentBlue,
     required PdfColor slateBorder,
   }) {
@@ -925,8 +919,8 @@ class PdfGenerator {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'حساب مقطع السلك والكابل الكهربائي المرتبط / Associated Cable Sizing Calculation:',
-          style: pw.TextStyle(font: cairoBold, fontSize: 11, color: accentBlue),
+          'ASSOCIATED ELECTRICAL CABLE SIZING (IEC 60364-5-52):',
+          style: pw.TextStyle(font: boldFont, fontSize: 10.5, color: accentBlue),
         ),
         pw.SizedBox(height: 6),
         pw.Table(
@@ -935,43 +929,52 @@ class PdfGenerator {
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEFF6FF)),
               children: [
-                _buildTableCell('النظام والجهد\nPhase & Voltage', isHeader: true, font: cairoBold),
-                _buildTableCell('${cableProvider.phase} / ${cableProvider.voltage.toInt()}V', font: cairoRegular),
-                _buildTableCell('الحمل ومعامل القدرة\nLoad & Power Factor', isHeader: true, font: cairoBold),
-                _buildTableCell('${cableProvider.loadValue} ${cableProvider.loadType} (cos φ: ${cableProvider.powerFactor.toStringAsFixed(2)})', font: cairoRegular),
+                _buildTableCell('System & Voltage', isHeader: true, font: boldFont),
+                _buildTableCell('${cableProvider.phase} / ${cableProvider.voltage.toInt()}V', font: regularFont),
+                _buildTableCell('Load & Power Factor', isHeader: true, font: boldFont),
+                _buildTableCell('${cableProvider.loadValue} ${cableProvider.loadType} (cos phi: ${cableProvider.powerFactor.toStringAsFixed(2)})', font: regularFont),
               ],
             ),
             pw.TableRow(
               children: [
-                _buildTableCell('طول الخط والمادة\nLength & Material', isHeader: true, font: cairoBold),
-                _buildTableCell('${cableProvider.length.toInt()}m / ${cableProvider.material == "Copper" ? "Copper" : "Aluminum"}', font: cairoRegular),
-                _buildTableCell('أقصى هبوط ومعامل K\nMax ΔV% & K', isHeader: true, font: cairoBold),
-                _buildTableCell('${cableProvider.maxDeltaVPct}% / K=${cableProvider.correctionFactorK}', font: cairoRegular),
+                _buildTableCell('Length & Conductor', isHeader: true, font: boldFont),
+                _buildTableCell('${cableProvider.length.toInt()}m / ${cableProvider.material}', font: regularFont),
+                _buildTableCell('Insulation & Structure', isHeader: true, font: boldFont),
+                _buildTableCell('${res.insulation} (${res.insulation == "XLPE" ? "90°C" : "70°C"}) / ${res.coreType}', font: regularFont),
+              ],
+            ),
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEFF6FF)),
+              children: [
+                _buildTableCell('Installation Method', isHeader: true, font: boldFont),
+                _buildTableCell(res.installationMethod, font: regularFont),
+                _buildTableCell('Temp & Grouping K', isHeader: true, font: boldFont),
+                _buildTableCell('${res.temperature.toInt()}°C (K_temp: ${res.temperatureFactorKtemp.toStringAsFixed(2)}) / ${res.groupingCircuitsCount} Ckts (K_grp: ${res.groupingFactorKgroup.toStringAsFixed(2)})', font: regularFont),
               ],
             ),
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFFEF3C7)),
               children: [
-                _buildTableCell('تيار التصميم (Ib)\nDesign Current', isHeader: true, font: cairoBold),
-                _buildTableCell('${res.designCurrentIb.toStringAsFixed(2)} A', font: cairoBold),
-                _buildTableCell('مقطع هبوط الجهد (Min S)\nMin Section (ΔV)', isHeader: true, font: cairoBold),
-                _buildTableCell('${res.minSectionForVoltageDropMinS.toStringAsFixed(2)} mm²', font: cairoBold),
+                _buildTableCell('Design Current (Ib)', isHeader: true, font: boldFont),
+                _buildTableCell('${res.designCurrentIb.toStringAsFixed(2)} A', font: boldFont),
+                _buildTableCell('Min Section for Delta V (Min S)', isHeader: true, font: boldFont),
+                _buildTableCell('${res.minSectionForVoltageDropMinS.toStringAsFixed(2)} mm²', font: boldFont),
               ],
             ),
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFDCFCE7)),
               children: [
-                _buildTableCell('المقطع الموصى به\nRecommended Section', isHeader: true, font: cairoBold),
+                _buildTableCell('RECOMMENDED SECTION', isHeader: true, font: boldFont),
                 _buildTableCell(
                   res.selectedCable != null
                       ? '${res.selectedCable!.section == res.selectedCable!.section.roundToDouble() ? res.selectedCable!.section.toInt() : res.selectedCable!.section} mm²'
-                      : 'Parallel Cables',
-                  font: cairoBold,
+                      : 'Parallel Cables Required',
+                  font: boldFont,
                 ),
-                _buildTableCell('السعة النهائية (Iz)\nFinal Ampacity (Raw × K)', isHeader: true, font: cairoBold),
+                _buildTableCell('Final Capacity (Iz)', isHeader: true, font: boldFont),
                 _buildTableCell(
                   '${res.finalCableCapacityIz != null ? res.finalCableCapacityIz!.toStringAsFixed(2) : '-'} A (Breaker: ${res.suggestedBreakerAmps ?? '-'}A)',
-                  font: cairoBold,
+                  font: boldFont,
                 ),
               ],
             ),
@@ -981,9 +984,9 @@ class PdfGenerator {
     );
   }
 
-  static pw.Widget _buildBilingualResultBox({
-    required String titleAr,
-    required String titleEn,
+  static pw.Widget _buildEnglishResultBox({
+    required String title,
+    required String subtitle,
     required String value,
     required pw.Font font,
     required pw.Font boldFont,
@@ -1002,11 +1005,11 @@ class PdfGenerator {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              titleAr,
-              style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey800),
+              title,
+              style: pw.TextStyle(font: boldFont, fontSize: 8, color: PdfColors.grey800),
             ),
             pw.Text(
-              titleEn,
+              subtitle,
               style: pw.TextStyle(font: font, fontSize: 6.5, color: PdfColors.grey600),
             ),
             pw.SizedBox(height: 2),

@@ -115,7 +115,7 @@ class CableResultCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '(${result.material} - ${result.phase})',
+                            '(${result.material} / ${result.insulation} • ${result.phase})',
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
@@ -123,13 +123,57 @@ class CableResultCard extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${result.installationMethod} • ${result.temperature.toInt()}°C • ${result.coreType}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
 
-            const Divider(height: 24, thickness: 1),
+            const Divider(height: 20, thickness: 1),
+
+            // شريط تفصيل معاملات التصحيح K
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppTheme.accentBlue.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Text(
+                    'K_temp: ${result.temperatureFactorKtemp.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  const Text('×', style: TextStyle(color: Colors.grey)),
+                  Text(
+                    'K_group: ${result.groupingFactorKgroup.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  const Text('=', style: TextStyle(color: Colors.grey)),
+                  Text(
+                    'Total K: ${result.correctionFactorK.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.accentBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // شبكة القياسات الهندسية الأربعة الأساسية
             Wrap(

@@ -7,12 +7,12 @@ import 'package:lumcal/utils/pdf_generator.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('PdfGenerator generates valid project PDF bytes with Arabic text and tables', () async {
+  test('PdfGenerator generates valid English-only project PDF report bytes', () async {
     final lightingProvider = LightingProvider();
 
     // Add sample rooms to project
     lightingProvider.calculate(
-      roomName: 'صالون الضيوف',
+      roomName: 'Living Room',
       length: 6.0,
       width: 4.5,
       requiredLux: 200,
@@ -22,7 +22,7 @@ void main() {
     lightingProvider.addCurrentToProject();
 
     lightingProvider.calculate(
-      roomName: 'المطبخ الحديث',
+      roomName: 'Kitchen',
       length: 4.0,
       width: 3.5,
       requiredLux: 350,
@@ -42,7 +42,7 @@ void main() {
     expect(bytes.length, greaterThan(1000));
   });
 
-  test('PdfGenerator generates valid cable report PDF bytes', () async {
+  test('PdfGenerator generates valid English-only cable sizing report bytes', () async {
     final cableProvider = CableSizingProvider();
     final result = cableProvider.result!;
 

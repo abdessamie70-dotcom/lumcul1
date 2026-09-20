@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/cable_capacity.dart';
 import '../models/cable_calculation_result.dart';
 
 class CableSizingProvider extends ChangeNotifier {
@@ -10,7 +11,16 @@ class CableSizingProvider extends ChangeNotifier {
   double _length = 85.0;
   String _material = 'Copper';
   double _maxDeltaVPct = 3.0;
+
+  // المعايير الإضافية المتقدمة
+  String _insulation = 'XLPE'; // "XLPE" أو "PVC"
+  String _installationMethod = 'In Conduit / Trunking'; // طريقة التمديد
+  double _temperature = 30.0; // درجة حرارة الوسط أو التربة
+  int _groupingCircuits = 1; // عدد الدوائر المتجاورة
+  String _coreType = 'Multi-Core'; // نوع الكابل
+
   double _correctionFactorK = 0.87;
+  bool _isManualK = false;
 
   CableCalculationResult? _result;
 
@@ -23,11 +33,32 @@ class CableSizingProvider extends ChangeNotifier {
   double get length => _length;
   String get material => _material;
   double get maxDeltaVPct => _maxDeltaVPct;
+  String get insulation => _insulation;
+  String get installationMethod => _installationMethod;
+  double get temperature => _temperature;
+  int get groupingCircuits => _groupingCircuits;
+  String get coreType => _coreType;
   double get correctionFactorK => _correctionFactorK;
+  bool get isManualK => _isManualK;
   CableCalculationResult? get result => _result;
 
+  // معاملات التصحيح المحسوبة حالياً
+  double get kTemp => CableCapacity.calculateTemperatureFactor(
+        temperature: _temperature,
+        insulation: _insulation,
+        installationMethod: _installationMethod,
+      );
+
+  double get kGroup => CableCapacity.calculateGroupingFactor(
+        circuitsCount: _groupingCircuits,
+        coreType: _coreType,
+        installationMethod: _installationMethod,
+      );
+
+  double get computedAutoK => double.parse((kTemp * kGroup).toStringAsFixed(3));
+
   CableSizingProvider() {
-    // حساب افتراضي أولي بالقيم الافتراضية
+    _correctionFactorK = computedAutoK;
     calculate(
       phase: _phase,
       voltage: _voltage,
@@ -38,6 +69,11 @@ class CableSizingProvider extends ChangeNotifier {
       material: _material,
       maxDeltaVPct: _maxDeltaVPct,
       correctionFactorK: _correctionFactorK,
+      insulation: _insulation,
+      installationMethod: _installationMethod,
+      temperature: _temperature,
+      groupingCircuitsCount: _groupingCircuits,
+      coreType: _coreType,
     );
   }
 
@@ -50,7 +86,13 @@ class CableSizingProvider extends ChangeNotifier {
     required double length,
     required String material,
     required double maxDeltaVPct,
-    required double correctionFactorK,
+    double? correctionFactorK,
+    String? insulation,
+    String? installationMethod,
+    double? temperature,
+    int? groupingCircuitsCount,
+    String? coreType,
+    bool isManualK = false,
   }) {
     _phase = phase;
     _voltage = voltage;
@@ -60,18 +102,35 @@ class CableSizingProvider extends ChangeNotifier {
     _length = length;
     _material = material;
     _maxDeltaVPct = maxDeltaVPct;
-    _correctionFactorK = correctionFactorK;
+
+    if (insulation != null) _insulation = insulation;
+    if (installationMethod != null) _installationMethod = installationMethod;
+    if (temperature != null) _temperature = temperature;
+    if (groupingCircuitsCount != null) _groupingCircuits = groupingCircuitsCount;
+    if (coreType != null) _coreType = coreType;
+
+    _isManualK = isManualK;
+    if (isManualK && correctionFactorK != null) {
+      _correctionFactorK = correctionFactorK;
+    } else {
+      _correctionFactorK = computedAutoK;
+    }
 
     _result = CableCalculationResult.calculate(
-      phase: phase,
-      voltage: voltage,
-      loadValue: loadValue,
-      loadType: loadType,
-      powerFactor: powerFactor,
-      length: length,
-      material: material,
-      maxDeltaVPct: maxDeltaVPct,
-      correctionFactorK: correctionFactorK,
+      phase: _phase,
+      voltage: _voltage,
+      loadValue: _loadValue,
+      loadType: _loadType,
+      powerFactor: _powerFactor,
+      length: _length,
+      material: _material,
+      maxDeltaVPct: _maxDeltaVPct,
+      correctionFactorK: _correctionFactorK,
+      insulation: _insulation,
+      installationMethod: _installationMethod,
+      temperature: _temperature,
+      groupingCircuitsCount: _groupingCircuits,
+      coreType: _coreType,
     );
 
     notifyListeners();
@@ -87,7 +146,13 @@ class CableSizingProvider extends ChangeNotifier {
     _length = 25.0; // طول تقديري لخط الإنارة 25 متر
     _material = 'Copper';
     _maxDeltaVPct = 3.0;
-    _correctionFactorK = 0.87;
+    _insulation = 'PVC'; // تمديدات الإنارة المنزلية الداخلية عادة PVC
+    _installationMethod = 'In Conduit / Trunking';
+    _temperature = 30.0;
+    _groupingCircuits = 1;
+    _coreType = 'Multi-Core';
+    _isManualK = false;
+    _correctionFactorK = computedAutoK;
 
     calculate(
       phase: _phase,
@@ -99,6 +164,11 @@ class CableSizingProvider extends ChangeNotifier {
       material: _material,
       maxDeltaVPct: _maxDeltaVPct,
       correctionFactorK: _correctionFactorK,
+      insulation: _insulation,
+      installationMethod: _installationMethod,
+      temperature: _temperature,
+      groupingCircuitsCount: _groupingCircuits,
+      coreType: _coreType,
     );
   }
 
@@ -111,7 +181,13 @@ class CableSizingProvider extends ChangeNotifier {
     _length = 85.0;
     _material = 'Copper';
     _maxDeltaVPct = 3.0;
-    _correctionFactorK = 0.87;
+    _insulation = 'XLPE';
+    _installationMethod = 'In Conduit / Trunking';
+    _temperature = 30.0;
+    _groupingCircuits = 1;
+    _coreType = 'Multi-Core';
+    _isManualK = false;
+    _correctionFactorK = computedAutoK;
 
     calculate(
       phase: _phase,
@@ -123,6 +199,11 @@ class CableSizingProvider extends ChangeNotifier {
       material: _material,
       maxDeltaVPct: _maxDeltaVPct,
       correctionFactorK: _correctionFactorK,
+      insulation: _insulation,
+      installationMethod: _installationMethod,
+      temperature: _temperature,
+      groupingCircuitsCount: _groupingCircuits,
+      coreType: _coreType,
     );
   }
 }

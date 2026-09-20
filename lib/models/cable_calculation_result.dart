@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'cable_capacity.dart';
 
-/// كائن يمثل نتيجة حساب مقطع السلك والكابل الكهربائي وفق المعايير الهندسية
+/// كائن يمثل نتيجة حساب مقطع السلك والكابل الكهربائي وفق المعايير الهندسية IEC 60364-5-52
 class CableCalculationResult {
   final String phase; // "1-Phase" أو "3-Phase"
   final double voltage; // الفولت
@@ -11,7 +11,16 @@ class CableCalculationResult {
   final double length; // طول الكابل بالمتر
   final String material; // "Copper" أو "Aluminum"
   final double maxDeltaVPct; // أقصى هبوط جهد مسموح به %
-  final double correctionFactorK; // معامل التصحيح K
+  final double correctionFactorK; // معامل التصحيح الإجمالي K
+
+  // المعايير الإضافية المتقدمة
+  final String insulation; // "XLPE" أو "PVC"
+  final String installationMethod; // طريقة التمديد
+  final double temperature; // درجة حرارة الوسط المحيط أو التربة
+  final double temperatureFactorKtemp; // معامل تصحيح الحرارة
+  final int groupingCircuitsCount; // عدد الدوائر المتجاورة
+  final double groupingFactorKgroup; // معامل التجاور
+  final String coreType; // "Multi-Core" أو "Single-Core"
 
   final double designCurrentIb;
   final double requiredIz;
@@ -20,13 +29,13 @@ class CableCalculationResult {
   final double minSectionForVoltageDropMinS;
 
   final CableCapacity? selectedCable;
-  final double? cableCapacity; // Raw capacity from table
+  final double? cableCapacity; // السعة المصححة بطريقة التمديد
   final double? actualDeltaVVolts;
   final double? actualDeltaVPct;
   final int? suggestedBreakerAmps;
   final bool isOverCapacity;
 
-  /// السعة النهائية للتحمل: Selected raw capacity from the table * Correction Factor (K)
+  /// السعة النهائية للتحمل: Selected capacity from the table * Correction Factor (K)
   double? get finalCableCapacityIz =>
       cableCapacity != null ? cableCapacity! * correctionFactorK : null;
 
@@ -40,6 +49,13 @@ class CableCalculationResult {
     required this.material,
     required this.maxDeltaVPct,
     required this.correctionFactorK,
+    required this.insulation,
+    required this.installationMethod,
+    required this.temperature,
+    required this.temperatureFactorKtemp,
+    required this.groupingCircuitsCount,
+    required this.groupingFactorKgroup,
+    required this.coreType,
     required this.designCurrentIb,
     required this.requiredIz,
     required this.conductivityGamma,
@@ -63,13 +79,38 @@ class CableCalculationResult {
     required double length,
     required String material,
     required double maxDeltaVPct,
-    required double correctionFactorK,
+    double? correctionFactorK,
+    String insulation = 'XLPE',
+    String installationMethod = 'In Conduit / Trunking',
+    double temperature = 30.0,
+    int groupingCircuitsCount = 1,
+    String coreType = 'Multi-Core',
   }) {
     final is1Phase = phase.contains('1');
     final isCopper = material.toLowerCase().contains('copper') || material.contains('نحاس');
     final double pf = (loadType == 'kW') ? powerFactor : 0.85;
 
-    // 1. تيار التصميم Ib
+    // 1. حساب معاملات التصحيح المعيارية K_temp و K_group
+    final kTemp = CableCapacity.calculateTemperatureFactor(
+      temperature: temperature,
+      insulation: insulation,
+      installationMethod: installationMethod,
+    );
+
+    final kGroup = CableCapacity.calculateGroupingFactor(
+      circuitsCount: groupingCircuitsCount,
+      coreType: coreType,
+      installationMethod: installationMethod,
+    );
+
+    // إذا لم يتم تحديد K يدوياً، يحسب آلياً: K = K_temp * K_group
+    final double computedK = (correctionFactorK != null && correctionFactorK > 0)
+        ? correctionFactorK
+        : (kTemp * kGroup);
+
+    final effectiveK = computedK > 0 ? computedK : 1.0;
+
+    // 2. تيار التصميم Ib
     double ib;
     if (loadType == 'Amps') {
       ib = loadValue;
@@ -88,17 +129,16 @@ class CableCalculationResult {
       }
     }
 
-    // 2. التيار المطلوب تحمله بعد معامل التصحيح Required Iz
-    final k = correctionFactorK > 0 ? correctionFactorK : 1.0;
-    final requiredIz = ib / k;
+    // 3. التيار المطلوب تحمله بعد معامل التصحيح Required Iz
+    final requiredIz = ib / effectiveK;
 
-    // 3. الموصلية النوعية γ
+    // 4. الموصلية النوعية γ (نحاس = 56، ألمنيوم = 35)
     final double gamma = isCopper ? 56.0 : 35.0;
 
-    // 4. أقصى هبوط جهد مسموح بالفولت
+    // 5. أقصى هبوط جهد مسموح بالفولت
     final maxDeltaVLimit = voltage * (maxDeltaVPct / 100.0);
 
-    // 5. أقل مقطع لتفادي هبوط الجهد Min S
+    // 6. أقل مقطع لتفادي هبوط الجهد Min S
     double minS;
     if (is1Phase) {
       minS = (2.0 * length * ib) / (gamma * maxDeltaVLimit);
@@ -106,23 +146,32 @@ class CableCalculationResult {
       minS = (math.sqrt(3) * length * ib * pf) / (gamma * maxDeltaVLimit);
     }
 
-    // 6. اختيار الكابل من جدول البيانات
+    // 7. اختيار الكابل من جدول البيانات وفق العزل وطريقة التمديد
     CableCapacity? chosenCable;
     double? capacity;
 
     final candidates = CableCapacity.dataset.where((item) {
-      final cap = item.getCapacity(material: material, phase: phase);
+      final cap = item.getCapacity(
+        material: material,
+        phase: phase,
+        insulation: insulation,
+        installationMethod: installationMethod,
+      );
       return cap >= requiredIz && item.section >= minS;
     }).toList();
 
     if (candidates.isNotEmpty) {
-      // اختيار أصغر مقطع يلبي الشرطين
       candidates.sort((a, b) => a.section.compareTo(b.section));
       chosenCable = candidates.first;
-      capacity = chosenCable.getCapacity(material: material, phase: phase);
+      capacity = chosenCable.getCapacity(
+        material: material,
+        phase: phase,
+        insulation: insulation,
+        installationMethod: installationMethod,
+      );
     }
 
-    // 7. حساب هبوط الجهد الفعلي مع الكابل المختار
+    // 8. حساب هبوط الجهد الفعلي مع الكابل المختار
     double? actualDeltaV;
     double? actualDeltaVPctVal;
     if (chosenCable != null) {
@@ -135,11 +184,11 @@ class CableCalculationResult {
       actualDeltaVPctVal = (actualDeltaV / voltage) * 100.0;
     }
 
-    // 8. اقتراح القاطع الكهربائي المناسب (Circuit Breaker)
+    // 9. اقتراح القاطع الكهربائي المناسب (Circuit Breaker)
     int? suggestedBreaker;
     if (chosenCable != null) {
       const standardBreakers = [
-        6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400
+        6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630
       ];
       for (final b in standardBreakers) {
         if (b >= ib) {
@@ -147,7 +196,7 @@ class CableCalculationResult {
           break;
         }
       }
-      suggestedBreaker ??= 400;
+      suggestedBreaker ??= 630;
     }
 
     return CableCalculationResult._(
@@ -159,7 +208,14 @@ class CableCalculationResult {
       length: length,
       material: material,
       maxDeltaVPct: maxDeltaVPct,
-      correctionFactorK: correctionFactorK,
+      correctionFactorK: effectiveK,
+      insulation: insulation,
+      installationMethod: installationMethod,
+      temperature: temperature,
+      temperatureFactorKtemp: kTemp,
+      groupingCircuitsCount: groupingCircuitsCount,
+      groupingFactorKgroup: kGroup,
+      coreType: coreType,
       designCurrentIb: ib,
       requiredIz: requiredIz,
       conductivityGamma: gamma,
