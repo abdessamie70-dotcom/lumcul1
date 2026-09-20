@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cable_sizing_provider.dart';
+import '../providers/lighting_provider.dart';
 import '../widgets/cable_result_card.dart';
+import '../utils/app_strings.dart';
 import '../utils/app_theme.dart';
 
 class CableSizingScreen extends StatefulWidget {
@@ -30,6 +32,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
   late int _selectedGroupingCircuits;
   late String _selectedCoreType;
   late TextEditingController _kController;
+  late TextEditingController _circuitNameController;
   bool _isManualK = false;
 
   final List<String> _installationMethods = const [
@@ -52,6 +55,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
   void initState() {
     super.initState();
     final provider = context.read<CableSizingProvider>();
+    _circuitNameController = TextEditingController(text: 'غرفة المعيشة');
     _selectedPhase = provider.phase;
     _voltageController = TextEditingController(text: provider.voltage.toInt().toString());
     _loadValueController = TextEditingController(text: '${provider.loadValue}');
@@ -72,6 +76,7 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
 
   @override
   void dispose() {
+    _circuitNameController.dispose();
     _voltageController.dispose();
     _loadValueController.dispose();
     _pfController.dispose();
@@ -154,6 +159,21 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
               children: [
                 // بنر توضيحي لحاسبة الكابلات
                 _buildIntroBanner(context),
+                const SizedBox(height: 16),
+
+                // اسم الدائرة لربطها بمشروع المنزل
+                Text(
+                  AppStrings.get('circuit_name_for_proj', context.watch<LightingProvider>().isArabic),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _circuitNameController,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.bookmark_outline_rounded, size: 18),
+                    hintText: context.watch<LightingProvider>().isArabic ? 'مثلاً: غرفة المعيشة أو اللوحة الرئيسية' : 'e.g., Living Room or Main Feeder',
+                  ),
+                ),
                 const SizedBox(height: 16),
 
                 // قسم 1: النظام والجهد
@@ -620,7 +640,37 @@ class _CableSizingScreenState extends State<CableSizingScreen> {
                 ),
 
                 // بطاقة عرض نتائج حساب الكابل
-                if (result != null) CableResultCard(result: result),
+                if (result != null) ...[
+                  CableResultCard(result: result),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      final isArabic = context.read<LightingProvider>().isArabic;
+                      final name = _circuitNameController.text.trim().isEmpty 
+                          ? (isArabic ? 'كابل التغذية' : 'Feeder Cable') 
+                          : _circuitNameController.text.trim();
+                      context.read<LightingProvider>().addOrUpdateCableToProject(name, result);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isArabic
+                                ? 'تم ربط كابل [$name] (${result.recommendedSection.toInt()} mm²) بمشروع المنزل بنجاح!'
+                                : 'Cable for [$name] (${result.recommendedSection.toInt()} mm²) added to Home Project successfully!',
+                          ),
+                          backgroundColor: AppTheme.accentBlue,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    label: Text(AppStrings.get('btn_add_to_project', context.watch<LightingProvider>().isArabic)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 30),
               ],

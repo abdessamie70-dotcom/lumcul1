@@ -14,6 +14,7 @@ class AppTheme {
   static const Color lightCard = Colors.white;
 
   static const Color accentGreen = Color(0xFF10B981);
+  static const Color accentEmerald = Color(0xFF10B981);
   static const Color accentBlue = Color(0xFF3B82F6);
   static const Color accentCyan = Color(0xFF06B6D4);
 

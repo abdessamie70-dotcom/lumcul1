@@ -4,6 +4,7 @@ import '../providers/lighting_provider.dart';
 import 'calculator_screen.dart';
 import 'standards_guide_screen.dart';
 import 'project_summary_screen.dart';
+import '../utils/app_strings.dart';
 import '../utils/app_theme.dart';
 
 class MainShell extends StatefulWidget {
@@ -25,7 +26,8 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<LightingProvider>();
-    final savedRoomsCount = provider.totalRoomsCount;
+    final isArabic = provider.isArabic;
+    final totalItemsCount = provider.totalUnifiedItemsCount;
 
     final List<Widget> screens = [
       CalculatorScreen(
@@ -49,30 +51,30 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: _switchTab,
         indicatorColor: AppTheme.primaryAmber.withValues(alpha: 0.25),
         destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.calculate_outlined),
-            selectedIcon: Icon(Icons.calculate_rounded, color: AppTheme.primaryDarkAmber),
-            label: 'حاسبة الإضاءة',
+          NavigationDestination(
+            icon: const Icon(Icons.calculate_outlined),
+            selectedIcon: const Icon(Icons.calculate_rounded, color: AppTheme.primaryDarkAmber),
+            label: AppStrings.get('nav_calculator', isArabic),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book_rounded, color: AppTheme.primaryDarkAmber),
-            label: 'دليل المعايير',
+          NavigationDestination(
+            icon: const Icon(Icons.menu_book_outlined),
+            selectedIcon: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryDarkAmber),
+            label: AppStrings.get('nav_standards', isArabic),
           ),
           NavigationDestination(
             icon: Badge(
-              isLabelVisible: savedRoomsCount > 0,
-              label: Text('$savedRoomsCount'),
+              isLabelVisible: totalItemsCount > 0,
+              label: Text('$totalItemsCount'),
               backgroundColor: AppTheme.primaryDarkAmber,
               child: const Icon(Icons.home_work_outlined),
             ),
             selectedIcon: Badge(
-              isLabelVisible: savedRoomsCount > 0,
-              label: Text('$savedRoomsCount'),
+              isLabelVisible: totalItemsCount > 0,
+              label: Text('$totalItemsCount'),
               backgroundColor: AppTheme.primaryDarkAmber,
               child: const Icon(Icons.home_work_rounded, color: AppTheme.primaryDarkAmber),
             ),
-            label: 'مشروع المنزل',
+            label: AppStrings.get('nav_project', isArabic),
           ),
         ],
       ),

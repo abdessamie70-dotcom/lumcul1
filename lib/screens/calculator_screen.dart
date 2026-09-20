@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/lighting_provider.dart';
 import '../models/lighting_standard.dart';
 import '../widgets/result_card.dart';
+import '../utils/app_strings.dart';
 import '../utils/app_theme.dart';
 import 'cable_sizing_screen.dart';
+import 'short_circuit_screen.dart';
 
 class CalculatorScreen extends StatefulWidget {
   final VoidCallback? onNavigateToProject;
@@ -18,7 +20,7 @@ class CalculatorScreen extends StatefulWidget {
 class _CalculatorScreenState extends State<CalculatorScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  int _activeInterfaceIndex = 0; // 0 = حاسبة الإضاءة المنزلية, 1 = حساب مقطع السلك والكابل
+  int _activeInterfaceIndex = 0; // 0 = الإضاءة, 1 = مقطع الكابل, 2 = تيار القصر والفصل
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lengthController = TextEditingController();
@@ -98,7 +100,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       final wattage = double.tryParse(_wattageController.text) ?? 9.0;
 
       final roomName = _isCustomRoomName
-          ? _nameController.text
+          ? _nameController.text.trim()
           : _selectedRoomPreset;
 
       context.read<LightingProvider>().calculate(
@@ -131,6 +133,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final provider = context.watch<LightingProvider>();
     final calculation = provider.currentCalculation;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = provider.isArabic;
 
     return Scaffold(
       appBar: AppBar(
@@ -141,17 +144,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             Row(
               children: [
                 Icon(
-                  _activeInterfaceIndex == 0 ? Icons.lightbulb_outline_rounded : Icons.cable_rounded,
-                  color: _activeInterfaceIndex == 0 ? AppTheme.primaryAmber : AppTheme.accentBlue,
+                  _activeInterfaceIndex == 0
+                      ? Icons.lightbulb_outline_rounded
+                      : _activeInterfaceIndex == 1
+                          ? Icons.cable_rounded
+                          : Icons.shield_rounded,
+                  color: _activeInterfaceIndex == 0
+                      ? AppTheme.primaryAmber
+                      : _activeInterfaceIndex == 1
+                          ? AppTheme.accentBlue
+                          : AppTheme.accentEmerald,
                 ),
                 const SizedBox(width: 8),
-                Text(_activeInterfaceIndex == 0 ? 'حاسبة الإضاءة المنزلية' : 'حساب مقطع السلك والكابل'),
+                Text(AppStrings.get('app_title', isArabic)),
               ],
             ),
             Padding(
               padding: const EdgeInsets.only(right: 32),
               child: Text(
-                'by BOUGHABA ABDESSAMIE',
+                AppStrings.get('app_subtitle', isArabic),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -163,18 +174,39 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ],
         ),
         actions: [
+          // زر تبديل اللغة (عربي / EN)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextButton.icon(
+              onPressed: () => provider.toggleLocale(),
+              icon: const Icon(Icons.language_rounded, size: 16, color: AppTheme.primaryAmber),
+              label: Text(
+                isArabic ? 'EN' : 'عربي',
+                style: const TextStyle(
+                  color: AppTheme.primaryAmber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: AppTheme.primaryAmber.withValues(alpha: 0.12),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
           IconButton(
             icon: Icon(
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
               color: AppTheme.primaryAmber,
             ),
-            tooltip: 'تبديل المظهر',
+            tooltip: isArabic ? 'تبديل المظهر' : 'Toggle Theme',
             onPressed: () => provider.toggleTheme(),
           ),
           if (_activeInterfaceIndex == 0)
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'إعادة ضبط الحقول',
+              tooltip: isArabic ? 'إعادة ضبط الحقول' : 'Reset Fields',
               onPressed: _resetForm,
             ),
         ],
@@ -182,23 +214,28 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // شريط التبديل العلوي بين واجهة الإنارة وواجهة مقطع السلك
+            // شريط التبديل العلوي بين الحاسبات الثلاث: إنارة | مقطع الكابل | تيار القصر والفصل
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 4),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 720),
                   child: SegmentedButton<int>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: 0,
-                        label: Text('حاسبة الإضاءة المنزلية'),
-                        icon: Icon(Icons.lightbulb_rounded),
+                        label: Text(AppStrings.get('tab_lighting', isArabic)),
+                        icon: const Icon(Icons.lightbulb_rounded),
                       ),
                       ButtonSegment(
                         value: 1,
-                        label: Text('حساب مقطع السلك والكابل'),
-                        icon: Icon(Icons.cable_rounded),
+                        label: Text(AppStrings.get('tab_cable', isArabic)),
+                        icon: const Icon(Icons.cable_rounded),
+                      ),
+                      ButtonSegment(
+                        value: 2,
+                        label: Text(AppStrings.get('tab_short_circuit', isArabic)),
+                        icon: const Icon(Icons.shield_rounded),
                       ),
                     ],
                     selected: {_activeInterfaceIndex},
@@ -214,7 +251,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             Expanded(
               child: _activeInterfaceIndex == 0
                   ? _buildLightingContent(context, provider, calculation)
-                  : const CableSizingScreen(),
+                  : _activeInterfaceIndex == 1
+                      ? const CableSizingScreen()
+                      : const ShortCircuitScreen(),
             ),
           ],
         ),

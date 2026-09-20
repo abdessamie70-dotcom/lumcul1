@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import '../models/room_model.dart';
 import '../models/lighting_standard.dart';
+import '../models/cable_calculation_result.dart';
+import '../models/short_circuit_model.dart';
 
-/// موفر الحالة المسؤول عن إدارة الحسابات الرياضية وقائمة مشروع المنزل
+/// موفر الحالة المسؤول عن إدارة الحسابات الرياضية وقائمة مشروع المنزل واللغات
 class LightingProvider extends ChangeNotifier {
-  // قائمة الغرف المحفوظة في مشروع المنزل
+  // اللغة الحالية للتطبيق (الافتراضية: العربية)
+  Locale _locale = const Locale('ar');
+
+  // قائمة الغرف المحفوظة في مشروع المنزل (للتوافق)
   final List<RoomCalculation> _projectRooms = [];
+
+  // خريطة عناصر المشروع الموحدة (المفتاح هو اسم الدائرة/الفراغ لدمج العناصر ذات التسمية المتطابقة)
+  final Map<String, UnifiedProjectItem> _projectItems = {};
 
   // النتيجة المحسوبة حالياً في شاشة الحاسبة
   RoomCalculation? _currentCalculation;
@@ -17,25 +25,41 @@ class LightingProvider extends ChangeNotifier {
   LightingStandard? _activePresetStandard;
 
   // Getters
+  Locale get locale => _locale;
+  bool get isArabic => _locale.languageCode == 'ar';
+
   List<RoomCalculation> get projectRooms => List.unmodifiable(_projectRooms);
+  List<UnifiedProjectItem> get unifiedProjectItems => _projectItems.values.toList();
+  int get totalUnifiedItemsCount => _projectItems.length;
+
   RoomCalculation? get currentCalculation => _currentCalculation;
   ThemeMode get themeMode => _themeMode;
   LightingStandard? get activePresetStandard => _activePresetStandard;
 
   // إحصائيات مشروع المنزل التراكمية
-  int get totalRoomsCount => _projectRooms.length;
+  int get totalRoomsCount => _projectItems.values.where((e) => e.hasLighting).length;
 
-  double get totalProjectArea =>
-      _projectRooms.fold(0.0, (sum, r) => sum + r.area);
+  double get totalProjectArea => _projectItems.values.fold(0.0, (sum, e) => sum + (e.lighting?.area ?? 0.0));
 
-  double get totalProjectLumens =>
-      _projectRooms.fold(0.0, (sum, r) => sum + r.totalRequiredLumens);
+  double get totalProjectLumens => _projectItems.values.fold(0.0, (sum, e) => sum + (e.lighting?.totalRequiredLumens ?? 0.0));
 
-  int get totalProjectBulbs =>
-      _projectRooms.fold(0, (sum, r) => sum + r.practicalBulbs);
+  int get totalProjectBulbs => _projectItems.values.fold(0, (sum, e) => sum + (e.lighting?.practicalBulbs ?? 0));
 
-  double get totalProjectWattage =>
-      _projectRooms.fold(0.0, (sum, r) => sum + r.totalWattage);
+  double get totalProjectWattage => _projectItems.values.fold(0.0, (sum, e) => sum + (e.lighting?.totalWattage ?? 0.0));
+
+  int get totalCablesCount => _projectItems.values.where((e) => e.hasCable).length;
+  int get totalBreakersCount => _projectItems.values.where((e) => e.hasShortCircuit).length;
+
+  /// تبديل لغة التطبيق بين العربية والإنجليزية
+  void toggleLocale() {
+    _locale = isArabic ? const Locale('en') : const Locale('ar');
+    notifyListeners();
+  }
+
+  void setLocale(Locale l) {
+    _locale = l;
+    notifyListeners();
+  }
 
   /// تبديل السمة (Light / Dark)
   void toggleTheme() {
@@ -47,7 +71,7 @@ class LightingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// تنفيذ الحساب الرياضي بناءً على المدخلات
+  /// تنفيذ الحساب الرياضي للإضاءة بناءً على المدخلات
   RoomCalculation calculate({
     required String roomName,
     required double length,
@@ -58,7 +82,7 @@ class LightingProvider extends ChangeNotifier {
   }) {
     final calculation = RoomCalculation(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: roomName.trim().isEmpty ? 'غرفة بدون اسم' : roomName.trim(),
+      name: roomName.trim().isEmpty ? (isArabic ? 'غرفة بدون اسم' : 'Unnamed Room') : roomName.trim(),
       length: length,
       width: width,
       requiredLux: requiredLux,
@@ -90,59 +114,109 @@ class LightingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// إضافة النتيجة المحسوبة إلى قائمة مشروع المنزل
+  /// إضافة أو تحديث إضاءة في مشروع المنزل مع الدمج التلقائي عند تطابق التسمية
   bool addCurrentToProject() {
     if (_currentCalculation != null) {
-      _projectRooms.add(_currentCalculation!);
-      notifyListeners();
+      addOrUpdateLightingToProject(_currentCalculation!);
       return true;
     }
     return false;
   }
 
-  /// حذف غرفة محددة من قائمة المشروع
-  void removeRoom(String id) {
+  void addOrUpdateLightingToProject(RoomCalculation room) {
+    final key = room.name.trim();
+    if (_projectItems.containsKey(key)) {
+      final existing = _projectItems[key]!;
+      _projectItems[key] = existing.copyWith(
+        lighting: room,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _projectItems[key] = UnifiedProjectItem(
+        id: room.id,
+        name: key,
+        lighting: room,
+        updatedAt: DateTime.now(),
+      );
+    }
+
+    _projectRooms.removeWhere((r) => r.name.trim() == key);
+    _projectRooms.add(room);
+
+    notifyListeners();
+  }
+
+  /// إضافة أو تحديث كابل في مشروع المنزل مع الدمج التلقائي عند تطابق التسمية
+  void addOrUpdateCableToProject(String circuitName, CableCalculationResult cable) {
+    final key = circuitName.trim().isEmpty ? (isArabic ? 'كابل التغذية' : 'Feeder Cable') : circuitName.trim();
+    if (_projectItems.containsKey(key)) {
+      final existing = _projectItems[key]!;
+      _projectItems[key] = existing.copyWith(
+        cable: cable,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _projectItems[key] = UnifiedProjectItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: key,
+        cable: cable,
+        updatedAt: DateTime.now(),
+      );
+    }
+    notifyListeners();
+  }
+
+  /// إضافة أو تحديث تيار القصر والقاطع في مشروع المنزل مع الدمج التلقائي عند تطابق التسمية
+  void addOrUpdateShortCircuitToProject(String circuitName, ShortCircuitResult sc) {
+    final key = circuitName.trim().isEmpty ? (isArabic ? 'حماية الدائرة' : 'Circuit Protection') : circuitName.trim();
+    if (_projectItems.containsKey(key)) {
+      final existing = _projectItems[key]!;
+      _projectItems[key] = existing.copyWith(
+        shortCircuit: sc,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _projectItems[key] = UnifiedProjectItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: key,
+        shortCircuit: sc,
+        updatedAt: DateTime.now(),
+      );
+    }
+    notifyListeners();
+  }
+
+  /// حذف عنصر موحد محدد من قائمة المشروع
+  void removeUnifiedItem(String id) {
+    _projectItems.removeWhere((key, item) => item.id == id);
     _projectRooms.removeWhere((room) => room.id == id);
     notifyListeners();
   }
 
-  /// مسح جميع غرف المشروع
+  /// مسح جميع عناصر المشروع
   void clearAllRooms() {
+    _projectItems.clear();
     _projectRooms.clear();
     notifyListeners();
   }
 
-  /// توليد تقرير نصي شامل للمشروع باللغة العربية لمشاركته أو نسخه
+  /// توليد نص تقرير مشروع الإنارة
   String generateProjectReport() {
-    if (_projectRooms.isEmpty) {
-      return 'لا توجد غرف مضافة في المشروع حتى الآن.';
-    }
-
     final buffer = StringBuffer();
-    buffer.writeln('==============================');
-    buffer.writeln('🏠 تقرير متطلبات الإضاءة للمنزل');
-    buffer.writeln('==============================\n');
-
-    buffer.writeln('📊 الملخص العام:');
-    buffer.writeln('• إجمالي عدد الغرف: $totalRoomsCount غرفة');
-    buffer.writeln('• إجمالي المساحة: ${totalProjectArea.toStringAsFixed(1)} م²');
-    buffer.writeln('• إجمالي اللومين المطلوب: ${totalProjectLumens.toStringAsFixed(0)} لومين');
-    buffer.writeln('• إجمالي اللمبات المقترحة: $totalProjectBulbs لمبة');
-    buffer.writeln('• إجمالي استهلاك الطاقة: ${totalProjectWattage.toStringAsFixed(1)} واط (${(totalProjectWattage / 1000).toStringAsFixed(2)} كيلوواط)\n');
-
-    buffer.writeln('📋 تفاصيل الغرف:');
-    for (int i = 0; i < _projectRooms.length; i++) {
-      final r = _projectRooms[i];
-      buffer.writeln('${i + 1}. ${r.name}:');
-      buffer.writeln('   - الأبعاد: ${r.length}م × ${r.width}م (المساحة: ${r.area.toStringAsFixed(1)} م²)');
-      buffer.writeln('   - شدة الإضاءة: ${r.requiredLux.toInt()} Lux');
-      buffer.writeln('   - اللومين المطلوب: ${r.totalRequiredLumens.toStringAsFixed(0)} lm');
-      buffer.writeln('   - اللمبات المقترحة: ${r.practicalBulbs} لمبة (قدرة ${r.bulbWattage.toInt()}W / ${r.bulbLumen.toInt()} lm)');
-      buffer.writeln('   - استهلاك الغرفة: ${r.totalWattage.toStringAsFixed(1)} واط');
-      buffer.writeln('------------------------------');
+    buffer.writeln('=== تقرير متطلبات الإضاءة للمنزل (LUMCAL) ===');
+    buffer.writeln('إجمالي عدد الغرف: $totalRoomsCount');
+    buffer.writeln('إجمالي المساحة: $totalProjectArea م²');
+    buffer.writeln('إجمالي اللومين: $totalProjectLumens لومين');
+    buffer.writeln('إجمالي اللمبات: $totalProjectBulbs لمبة');
+    buffer.writeln('إجمالي الاستهلاك الكهربائي: $totalProjectWattage واط');
+    buffer.writeln('-------------------------------------------');
+    for (final room in _projectRooms) {
+      buffer.writeln('الغرفة: ${room.name} (${room.area} م²)');
+      buffer.writeln('  - اللوكس المطلوب: ${room.requiredLux} Lux');
+      buffer.writeln('  - اللومين الإجمالي: ${room.totalRequiredLumens} lm');
+      buffer.writeln('  - اللمبات المقترحة: ${room.practicalBulbs} لمبة (${room.bulbWattage}W / ${room.bulbLumen}lm)');
+      buffer.writeln('  - الاستهلاك: ${room.totalWattage} واط');
     }
-
-    buffer.writeln('\nتم الحساب وفق المعايير الهندسية ومعامل الفواقد (Utilization & Loss Factor = 2).');
     return buffer.toString();
   }
 }

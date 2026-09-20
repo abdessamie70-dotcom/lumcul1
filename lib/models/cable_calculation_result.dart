@@ -39,6 +39,15 @@ class CableCalculationResult {
   double? get finalCableCapacityIz =>
       cableCapacity != null ? cableCapacity! * correctionFactorK : null;
 
+  /// المقطع الموصى به بالكابل
+  double get recommendedSection => selectedCable?.section ?? 0.0;
+
+  /// مادة الموصل
+  String get conductorMaterial => material;
+
+  /// سعة التحمل النهائية Iz
+  double get finalCapacityIz => finalCableCapacityIz ?? 0.0;
+
   CableCalculationResult._({
     required this.phase,
     required this.voltage,
@@ -77,7 +86,8 @@ class CableCalculationResult {
     required String loadType,
     required double powerFactor,
     required double length,
-    required String material,
+    String? material,
+    String? conductorMaterial,
     required double maxDeltaVPct,
     double? correctionFactorK,
     String insulation = 'XLPE',
@@ -86,8 +96,9 @@ class CableCalculationResult {
     int groupingCircuitsCount = 1,
     String coreType = 'Multi-Core',
   }) {
+    final String chosenMaterial = material ?? conductorMaterial ?? 'Copper';
     final is1Phase = phase.contains('1');
-    final isCopper = material.toLowerCase().contains('copper') || material.contains('نحاس');
+    final isCopper = chosenMaterial.toLowerCase().contains('copper') || chosenMaterial.contains('نحاس');
     final double pf = (loadType == 'kW') ? powerFactor : 0.85;
 
     // 1. حساب معاملات التصحيح المعيارية K_temp و K_group
@@ -152,7 +163,7 @@ class CableCalculationResult {
 
     final candidates = CableCapacity.dataset.where((item) {
       final cap = item.getCapacity(
-        material: material,
+        material: chosenMaterial,
         phase: phase,
         insulation: insulation,
         installationMethod: installationMethod,
@@ -164,7 +175,7 @@ class CableCalculationResult {
       candidates.sort((a, b) => a.section.compareTo(b.section));
       chosenCable = candidates.first;
       capacity = chosenCable.getCapacity(
-        material: material,
+        material: chosenMaterial,
         phase: phase,
         insulation: insulation,
         installationMethod: installationMethod,
@@ -206,7 +217,7 @@ class CableCalculationResult {
       loadType: loadType,
       powerFactor: powerFactor,
       length: length,
-      material: material,
+      material: chosenMaterial,
       maxDeltaVPct: maxDeltaVPct,
       correctionFactorK: effectiveK,
       insulation: insulation,

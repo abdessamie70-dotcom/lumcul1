@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   test('PDF package compilation test', () async {
     final pdf = pw.Document();
     

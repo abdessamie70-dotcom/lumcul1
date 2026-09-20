@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/lighting_standard.dart';
 import '../providers/lighting_provider.dart';
 import '../widgets/standard_card.dart';
+import '../utils/app_strings.dart';
 import '../utils/app_theme.dart';
 
 class StandardsGuideScreen extends StatelessWidget {
@@ -17,23 +18,44 @@ class StandardsGuideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<LightingProvider>();
+    final isArabic = provider.isArabic;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.auto_stories_rounded, color: AppTheme.primaryAmber),
-            SizedBox(width: 8),
-            Text('دليل الإضاءة المعيارية'),
+            const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryAmber),
+            const SizedBox(width: 8),
+            Text(AppStrings.get('standards_title', isArabic)),
           ],
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextButton.icon(
+              onPressed: () => provider.toggleLocale(),
+              icon: const Icon(Icons.language_rounded, size: 16, color: AppTheme.primaryAmber),
+              label: Text(
+                isArabic ? 'EN' : 'عربي',
+                style: const TextStyle(
+                  color: AppTheme.primaryAmber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: AppTheme.primaryAmber.withValues(alpha: 0.12),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
           IconButton(
             icon: Icon(
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
               color: AppTheme.primaryAmber,
             ),
-            tooltip: 'تبديل المظهر',
+            tooltip: isArabic ? 'تبديل المظهر' : 'Toggle Theme',
             onPressed: () => provider.toggleTheme(),
           ),
         ],
