@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+  <meta charset="UTF-8">
+  <title>LUMCAL APP - Electrical & Lighting Engineering Suite</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
+    .en-mode body, [lang="en"] body, [dir="ltr"] { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.4); border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased p-2 md:p-6 flex flex-col items-center min-h-screen">
+
+  <!-- شريط توضيحي علوي للموقع/المعاينة -->
+  <header class="w-full max-w-4xl mb-4 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-right shadow-xl">
+    <div>
+      <div class="flex items-center justify-center md:justify-start gap-2">
+        <span class="text-2xl">⚡</span>
+        <h1 class="text-xl font-extrabold text-amber-400 tracking-wide">LUMCAL APP</h1>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">IEC 60364 & CIBSE</span>
+      </div>
+      <p class="text-xs text-slate-400 mt-1" id="header-desc">
+        الحاسبة الهندسية المتكاملة: <span class="text-amber-300 font-semibold">الإضاءة</span> • <span class="text-blue-400 font-semibold">مقاطع الكابلات</span> • <span class="text-emerald-400 font-semibold">تيار القصر والفصل</span>
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- أزرار تبديل اللغة المباشرة (عربي / English) -->
+      <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs font-bold">
+        <button id="btn-lang-ar" onclick="setLanguage('ar')" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shadow">العربية (AR)</button>
+        <button id="btn-lang-en" onclick="setLanguage('en')" class="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white">English (EN)</button>
+      </div>
+      <span class="text-xs px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 font-semibold hidden md:inline-block">
+        by BOUGHABA ABDESSAMIE
+      </span>
+      <button onclick="openPdfModal('cable')" class="text-xs px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold flex items-center gap-1.5 shadow transition-all">
+        <span>📄</span>
+        <span>View PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- إطار محاكي الهاتف الذكي (Mobile Simulator) -->
+  <div class="w-full max-w-md bg-slate-900 text-slate-100 rounded-3xl border-4 border-slate-700 shadow-2xl overflow-hidden flex flex-col h-[820px] relative">
+    
+    <!-- شريط الحالة العلوي للهاتف (Status Bar) -->
+    <div class="bg-slate-950 px-6 py-2 flex justify-between items-center text-xs text-slate-400 select-none">
+      <span class="font-mono">15:50</span>
+      <div class="w-20 h-4 bg-slate-800 rounded-full mx-auto"></div>
+      <div class="flex items-center space-x-1.5 space-x-reverse text-[10px]">
+        <span>5G</span>
+        <span>100%</span>
+        <span>🔋</span>
+      </div>
+    </div>
+
+    <!-- ترويسة التطبيق (AppBar) -->
+    <div class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex justify-between items-center select-none">
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <span id="app-icon" class="text-amber-400 text-xl">💡</span>
+          <span id="app-title" class="font-extrabold text-sm text-white tracking-wide">LUMCAL APP</span>
+        </div>
+        <span class="text-[10px] font-semibold text-amber-400 tracking-wide pr-7">by BOUGHABA ABDESSAMIE</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <!-- زر التبديل السريع بين اللغتين داخل التطبيق -->
+        <button onclick="toggleLanguage()" class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1 transition-all" title="تبديل اللغة / Switch Language">
+          <span>🌐</span>
+          <span id="app-lang-toggle-text">EN</span>
+        </button>
+        <button onclick="openPdfModal('project')" class="p-1.5 hover:bg-slate-800 rounded-full text-amber-400 text-sm" title="Download English PDF">📄</button>
+        <button onclick="toggleAppTheme()" class="p-1.5 hover:bg-slate-800 rounded-full text-amber-400 text-sm" title="تبديل المظهر">☀️</button>
+        <button onclick="resetCurrentView()" class="p-1.5 hover:bg-slate-800 rounded-full text-slate-300 text-sm" title="إعادة ضبط">🔄</button>
+      </div>
+    </div>
+
+    <!-- شريط التبديل العلوي بين الحاسبات الثلاث: إنارة | كابلات | تيار القصر ومنحنى الفصل -->
+    <div id="top-switcher-container" class="p-2 bg-slate-900/90 border-b border-slate-800/80">
+      <div class="bg-slate-800/90 p-1 rounded-2xl flex gap-1 border border-slate-700/60 text-[11px] font-semibold">
+        <button id="tab-light" onclick="switchCalcInterface(0)" class="flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 bg-amber-500 text-slate-950 shadow-md font-bold">
+          <span>💡</span>
+          <span id="txt-tab-light">الإضاءة</span>
+        </button>
+        <button id="tab-cable" onclick="switchCalcInterface(1)" class="flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-300 hover:text-white">
+          <span>⚡</span>
+          <span id="txt-tab-cable">مقطع الكابل</span>
+        </button>
+        <button id="tab-sc" onclick="switchCalcInterface(2)" class="flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-300 hover:text-white">
+          <span>🛡️</span>
+          <span id="txt-tab-sc">تيار القصر والفصل</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- المحتوى التفاعلي الرئيسي القابل للتمرير -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4" id="main-content-scroll">
+
+      <!-- ================= 1. واجهة حاسبة الإضاءة ================= -->
+      <div id="view-lighting" class="space-y-4">
+        
+        <!-- بنر ترحيبي -->
+        <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 flex items-start gap-3">
+          <div class="p-2 bg-amber-500/20 rounded-full text-amber-400 text-base">💡</div>
+          <div class="text-xs text-amber-200/90 leading-relaxed" id="txt-light-banner">
+            أدخل أبعاد الغرفة وشدة الإضاءة لحساب عدد اللمبات واستهلاك الطاقة واقتراح السلك والقاطع المناسب.
+          </div>
+        </div>
+
+        <!-- حقول الإدخال للإنارة -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-room-name">اسم الدائرة / الفراغ:</label>
+            <div class="flex gap-2">
+              <input type="text" id="l-room-name" value="" placeholder="اسم الغرفة / الفراغ (مثال: صالة أو نوم)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <select id="l-room-preset" onchange="onRoomPresetChange()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-slate-300 focus:border-amber-500 focus:outline-none">
+                <!-- يتم تعبئتها ديناميكياً بحسب اللغة -->
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-len">الطول (متر):</label>
+              <input type="number" id="l-len" value="" placeholder="مثال: 5.0" step="0.5" oninput="calculateLighting()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-wid">العرض (متر):</label>
+              <input type="number" id="l-wid" value="" placeholder="مثال: 4.0" step="0.5" oninput="calculateLighting()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-slate-300" id="lbl-lux">شدة الإضاءة المطلوبة (Lux):</label>
+              <span id="lux-val" class="text-xs font-bold text-amber-400">150 Lux</span>
+            </div>
+            <input type="range" id="l-lux" min="50" max="600" step="10" value="150" oninput="onLuxSliderChange()" class="w-full accent-amber-500 cursor-pointer">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-lumen">لومين اللمبة (lm):</label>
+              <input type="number" id="l-lumen" value="" placeholder="مثال: 806" step="50" oninput="calculateLighting()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-watt">قدرة اللمبة (Watt):</label>
+              <input type="number" id="l-watt" value="" placeholder="مثال: 9" step="1" oninput="calculateLighting()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- بطاقة نتائج الإنارة -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+            <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+              <span>✨</span> <span id="txt-light-res-title">نتائج حساب الإضاءة</span>
+            </span>
+            <span class="text-[10px] text-slate-400">UF = 2.0</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-right">
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-res-area">المساحة</span>
+              <span id="res-area" class="text-sm font-bold text-purple-400">20.0 m²</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-res-lumens">إجمالي اللومين</span>
+              <span id="res-lumens" class="text-sm font-bold text-amber-400">8,000 lm</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-res-bulbs">عدد اللمبات</span>
+              <span id="res-bulbs" class="text-sm font-bold text-emerald-400">10 لمبات</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-res-watt">الاستهلاك الإجمالي</span>
+              <span id="res-watt" class="text-sm font-bold text-pink-400">90 W</span>
+            </div>
+          </div>
+
+          <!-- توصية السلك والقاطع -->
+          <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-blue-400 text-base">🔌</span>
+              <div>
+                <span class="text-[10px] text-slate-400 block" id="lbl-wire-rec">توصية السلك والقاطع</span>
+                <span id="res-wire-info" class="text-xs font-bold text-blue-300">سلك: 1.5 mm² Cu / PVC • قاطع: 10A MCB</span>
+              </div>
+            </div>
+            <button onclick="prefillCableFromLighting()" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1.5 rounded-lg transition-all" id="btn-sync-cable">
+              حساب الكابل ⬅
+            </button>
+          </div>
+
+          <!-- زر إضافة لمشروع المنزل -->
+          <button onclick="addLightingToProject()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow transition-all">
+            <span>➕</span>
+            <span id="btn-add-light-proj">إضافة لمشروع المنزل</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ================= 2. واجهة حساب مقطع السلك والكابل ================= -->
+      <div id="view-cable" class="space-y-4 hidden">
+        
+        <!-- بنر معلومات معايير IEC -->
+        <div class="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 flex items-start gap-3">
+          <div class="p-2 bg-blue-500/20 rounded-full text-blue-400 text-base">⚡</div>
+          <div class="text-xs text-blue-200/90 leading-relaxed" id="txt-cable-banner">
+            حساب مقاطع الكابلات وفق معايير <strong>IEC 60364-5-52</strong> الدقيقة، مع الأخذ بالاعتبار نوع العزل، طريقة التمديد، والحرارة والتجاور.
+          </div>
+        </div>
+
+        <!-- حقول الإدخال للكابل -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 space-y-3">
+          
+          <!-- اسم الدائرة لربطها في نفس المشروع -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-name">اسم الدائرة / الفراغ (لربطه بالمشروع):</label>
+            <input type="text" id="c-name" value="" placeholder="مثلاً: اللوحة الرئيسية أو خط التغذية" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-phase">نظام الأطوار:</label>
+              <select id="c-phase" onchange="onPhaseChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="3-Phase" selected>3-Phase (400V)</option>
+                <option value="1-Phase">1-Phase (230V)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-volt">الجهد (Voltage V):</label>
+              <input type="number" id="c-volt" value="" placeholder="400" oninput="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-load">قيمة الحمل:</label>
+              <input type="number" id="c-load" value="" placeholder="مثال: 45" step="1" oninput="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-loadtype">نوع الحمل:</label>
+              <select id="c-loadtype" onchange="onLoadTypeChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="kW" selected>kW</option>
+                <option value="kVA">kVA</option>
+                <option value="Amps">Amps</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2" id="c-pf-row">
+            <div id="c-pf-container">
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-pf">معامل القدرة (cos φ):</label>
+              <input type="number" id="c-pf" value="" placeholder="0.85" min="0.7" max="1.0" step="0.01" oninput="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-len">طول الكابل (متر):</label>
+              <input type="number" id="c-len" value="" placeholder="مثال: 85" step="5" oninput="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- المواصفات الهندسية: المادة والعزل -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-mat">مادة الموصل:</label>
+              <select id="c-mat" onchange="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="Copper" selected id="opt-c-cu">نحاس (Copper - Cu)</option>
+                <option value="Aluminum" id="opt-c-al">ألمنيوم (Aluminum - Al)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-ins">نوع العزل:</label>
+              <select id="c-insulation" onchange="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="XLPE" selected>XLPE (90°C)</option>
+                <option value="PVC">PVC (70°C)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- طريقة التمديد -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-c-method">طريقة التمديد (Installation Method):</label>
+            <select id="c-method" onchange="onMethodChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+              <!-- يتم تحديثها باللغة المختارة -->
+            </select>
+          </div>
+
+          <!-- الحرارة والتجاور وهبوط الجهد -->
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label id="c-temp-label" class="block text-[11px] font-semibold text-slate-300 mb-1">الحرارة (°C):</label>
+              <select id="c-temp" onchange="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="15">15°C</option>
+                <option value="20">20°C</option>
+                <option value="25">25°C</option>
+                <option value="30" selected>30°C</option>
+                <option value="35">35°C</option>
+                <option value="40">40°C</option>
+                <option value="45">45°C</option>
+                <option value="50">50°C</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-300 mb-1" id="lbl-c-group">التجاور (دوائر):</label>
+              <select id="c-group" onchange="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                <option value="1" selected id="opt-grp-1">دائرة 1 (منفرد)</option>
+                <option value="2" id="opt-grp-2">دائرتان (2)</option>
+                <option value="3" id="opt-grp-3">3 دوائر</option>
+                <option value="4" id="opt-grp-4">4 دوائر</option>
+                <option value="6" id="opt-grp-6">6+ دوائر</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-300 mb-1" id="lbl-c-deltav">أقصى ΔV (%):</label>
+              <input type="number" id="c-deltav" value="3" step="0.5" oninput="calculateCable()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- ملخص معاملات التصحيح المحسوبة -->
+          <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-2.5 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]" id="lbl-c-k-summary">معامل التصحيح الكلي:</span>
+            <div class="flex items-center gap-2">
+              <span id="c-k-calc-desc" class="text-[10px] text-blue-300">K_temp (1.00) × K_group (1.00) = 1.00</span>
+              <span id="c-k-badge" class="font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">K = 1.00</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- بطاقة نتائج الكابل المتقدمة -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+            <span class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+              <span>🎯</span> <span id="txt-c-res-title">التوصية الهندسية للمقطع</span>
+            </span>
+            <span id="c-res-spec" class="text-[10px] text-slate-300 font-semibold bg-slate-800 px-2 py-0.5 rounded-md">Copper / XLPE (90°C)</span>
+          </div>
+
+          <div class="bg-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-3 text-center">
+            <span class="text-[11px] text-slate-400 block mb-1" id="lbl-c-rec-sec">المقطع المعتمد الموصى به:</span>
+            <span id="c-res-sec" class="text-2xl font-black text-emerald-400 tracking-wide">25 mm²</span>
+            <span class="text-[10px] text-slate-400 block mt-1" id="txt-c-sec-sub">يحقق كفاءة التحمل الحراري والأمان لهبوط الجهد معاً</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-right text-xs">
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-c-ib">تيار التصميم (Ib)</span>
+              <span id="c-res-ib" class="text-sm font-bold text-blue-400">76.42 A</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-c-mins">أدنى مقطع لهبوط الجهد (Min S)</span>
+              <span id="c-res-mins" class="text-sm font-bold text-purple-400">14.65 mm²</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-c-iz">سعة تحمل الكابل (Iz)</span>
+              <span id="c-res-iz" class="text-sm font-bold text-emerald-400">105.00 A</span>
+              <span id="c-res-iz-sub" class="text-[9px] text-slate-400 block">Raw: 105.0A × K: 1.00</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-c-breaker">القاطع المناسب</span>
+              <span id="c-res-breaker" class="text-sm font-bold text-amber-400">80 A</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
+            <div>
+              <span class="text-[10px] text-slate-400 block" id="lbl-c-drop">هبوط الجهد الفعلي (Actual ΔV)</span>
+              <span id="c-res-drop" class="text-xs font-bold text-slate-200">1.76 % (7.03 V)</span>
+            </div>
+            <span id="c-res-drop-max" class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">Max limit: 3.0% (12.0 V)</span>
+          </div>
+
+          <!-- أزرار الإجراءات للكابل -->
+          <div class="flex gap-2">
+            <button onclick="addCableToProject()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow transition-all">
+              <span>➕</span>
+              <span id="btn-add-cable-proj">إضافة لمشروع المنزل</span>
+            </button>
+            <button onclick="switchCalcInterface(2)" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 shadow transition-all" title="فحص تيار القصر">
+              <span>🛡️</span>
+              <span id="btn-to-sc">فحص القصر ⬅</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= 3. واجهة تيار القصر ومنحنيات الفصل ================= -->
+      <div id="view-short-circuit" class="space-y-4 hidden">
+        
+        <!-- بنر ترحيبي وتوضيحي -->
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex items-start gap-3">
+          <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 text-base">🛡️</div>
+          <div class="text-xs text-emerald-200/90 leading-relaxed" id="txt-sc-banner">
+            حساب تيار القصر الأقصى والأدنى ($I_{sc}$)، التحقق من التحمل الحراري للكابل ($S \ge S_{min}$)، واختيار منحنى الفصل المناسب (**Curve B, C, D, K, Z**).
+          </div>
+        </div>
+
+        <!-- حقول الإدخال لتيار القصر والقاطع -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 space-y-3">
+          
+          <!-- اسم الدائرة لربطها في نفس المشروع -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-name">اسم الدائرة / الفراغ (لربطه بالمشروع):</label>
+            <input type="text" id="sc-name" value="" placeholder="مثلاً: لوحة التوزيع أو الدائرة الرئيسية" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-phase">المنظومة الكهربائية:</label>
+              <select id="sc-phase" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                <option value="3-Phase" selected>3-Phase (400V)</option>
+                <option value="1-Phase">1-Phase (230V)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-source">تيار قصر المنبع (Isc source):</label>
+              <div class="relative">
+                <input type="number" id="sc-source" value="" placeholder="15" step="1" oninput="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                <span class="absolute left-3 top-2 text-[10px] text-slate-400">kA</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-sec">مقطع الكابل (mm²):</label>
+              <select id="sc-sec" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                <option value="1.5">1.5 mm²</option>
+                <option value="2.5">2.5 mm²</option>
+                <option value="4">4 mm²</option>
+                <option value="6">6 mm²</option>
+                <option value="10">10 mm²</option>
+                <option value="16">16 mm²</option>
+                <option value="25" selected>25 mm²</option>
+                <option value="35">35 mm²</option>
+                <option value="50">50 mm²</option>
+                <option value="70">70 mm²</option>
+                <option value="95">95 mm²</option>
+                <option value="120">120 mm²</option>
+                <option value="150">150 mm²</option>
+                <option value="185">185 mm²</option>
+                <option value="240">240 mm²</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-len">طول الكابل (متر):</label>
+              <input type="number" id="sc-len" value="" placeholder="مثال: 50" step="5" oninput="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-matins">مادة الموصل والعزل:</label>
+              <select id="sc-mat-ins" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                <option value="Cu-XLPE" selected id="opt-sc-cuxlpe">نحاس / XLPE (k = 143)</option>
+                <option value="Cu-PVC" id="opt-sc-cupvc">نحاس / PVC (k = 115)</option>
+                <option value="Al-XLPE" id="opt-sc-alxlpe">ألمنيوم / XLPE (k = 94)</option>
+                <option value="Al-PVC" id="opt-sc-alpvc">ألمنيوم / PVC (k = 76)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-time">زمن فصل القاطع (t):</label>
+              <select id="sc-time" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                <option value="0.04" id="opt-t-004">0.04s (فصل لحظي سريع)</option>
+                <option value="0.10" selected id="opt-t-010">0.10s (معياري MCB)</option>
+                <option value="0.20" id="opt-t-020">0.20s (MCCB مع تأخير)</option>
+                <option value="0.40" id="opt-t-040">0.40s (الحد الأقصى IEC)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- اختيار القاطع ومنحنى الفصل -->
+          <div class="border-t border-slate-700/60 pt-3">
+            <span class="text-xs font-bold text-amber-400 block mb-2" id="lbl-sc-cb-title">مواصفات القاطع الكهربائي (Circuit Breaker):</span>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-in">التيار الاسمي للقاطع (In):</label>
+                <select id="sc-in" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                  <option value="6">6 A</option>
+                  <option value="10">10 A</option>
+                  <option value="16">16 A</option>
+                  <option value="20">20 A</option>
+                  <option value="25">25 A</option>
+                  <option value="32">32 A</option>
+                  <option value="40">40 A</option>
+                  <option value="50">50 A</option>
+                  <option value="63" selected>63 A</option>
+                  <option value="80">80 A</option>
+                  <option value="100">100 A</option>
+                  <option value="125">125 A</option>
+                  <option value="160">160 A</option>
+                  <option value="200">200 A</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-sc-curve">منحنى الفصل (Tripping Curve):</label>
+                <select id="sc-curve" onchange="calculateShortCircuit()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-300 font-bold focus:border-amber-500 focus:outline-none">
+                  <option value="B" id="opt-crv-b">منحنى B (3 - 5 In)</option>
+                  <option value="C" selected id="opt-crv-c">منحنى C (5 - 10 In)</option>
+                  <option value="D" id="opt-crv-d">منحنى D (10 - 20 In)</option>
+                  <option value="K" id="opt-crv-k">منحنى K (8 - 12 In)</option>
+                  <option value="Z" id="opt-crv-z">منحنى Z (2 - 3 In)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- شرح فوري للمنحنى المختار -->
+            <div id="sc-curve-desc" class="mt-2 text-[10px] text-slate-300 bg-slate-900/80 p-2 rounded-xl border border-slate-800 leading-relaxed">
+              <!-- نص ديناميكي -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- بطاقة نتائج تيار القصر والتحمل الحراري -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+              <span>⚡</span> <span id="txt-sc-res-title">نتائج فحص تيار القصر والفصل</span>
+            </span>
+            <span id="sc-thermal-badge" class="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              الكابل محمي حرارياً ✔
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-right text-xs">
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-sc-max">أقصى تيار قصر (Isc max)</span>
+              <span id="sc-res-max" class="text-sm font-bold text-red-400">12.4 kA</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-sc-min">أدنى تيار قصر (Isc min)</span>
+              <span id="sc-res-min" class="text-sm font-bold text-amber-400">1,280 A</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-sc-smin">التحمل الحراري (Min S req)</span>
+              <span id="sc-res-smin" class="text-sm font-bold text-emerald-400">8.95 mm²</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-sc-lmax">أقصى طول مسموح (L max)</span>
+              <span id="sc-res-lmax" class="text-sm font-bold text-blue-400">142 متر</span>
+            </div>
+          </div>
+
+          <!-- التحقق من الفصل المغناطيسي اللحظي -->
+          <div id="sc-mag-status-card" class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>🎯</span> <span id="lbl-sc-mag-title">حالة الفصل المغناطيسي اللحظي</span>
+              </span>
+              <span id="sc-mag-badge" class="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                فصل لحظي آمن (t ≤ 0.1s)
+              </span>
+            </div>
+            <p id="sc-mag-text" class="text-[11px] text-slate-300 leading-relaxed">
+              <!-- نص ديناميكي -->
+            </p>
+          </div>
+
+          <!-- رسم بياني تفاعلي لمنحنى الفصل (Tripping Curve Visualizer) -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-200" id="lbl-sc-curve-chart">منحنى الفصل (Time-Current Curve):</span>
+              <span id="sc-curve-tag" class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Curve C (63A)</span>
+            </div>
+
+            <!-- SVG تفاعلي للمنحنى -->
+            <div class="w-full bg-slate-950 rounded-xl p-2 border border-slate-800/80">
+              <svg viewBox="0 0 360 180" class="w-full h-auto select-none" id="curve-svg">
+                <!-- شبكة الإحداثيات والخطوط المرجعية -->
+                <line x1="40" y1="20" x2="40" y2="150" stroke="#334155" stroke-width="1.5" />
+                <line x1="40" y1="150" x2="340" y2="150" stroke="#334155" stroke-width="1.5" />
+                
+                <text x="35" y="25" fill="#64748b" font-size="8" text-anchor="end">1000s</text>
+                <text x="35" y="80" fill="#64748b" font-size="8" text-anchor="end">1s</text>
+                <text x="35" y="145" fill="#64748b" font-size="8" text-anchor="end">0.01s</text>
+                
+                <text x="50" y="162" fill="#64748b" font-size="8" text-anchor="middle">In</text>
+                <text x="120" y="162" fill="#64748b" font-size="8" text-anchor="middle">3In</text>
+                <text x="180" y="162" fill="#64748b" font-size="8" text-anchor="middle">5In</text>
+                <text x="240" y="162" fill="#64748b" font-size="8" text-anchor="middle">10In</text>
+                <text x="300" y="162" fill="#64748b" font-size="8" text-anchor="middle">20In</text>
+
+                <!-- منطقة الفصل الحراري (Thermal Overload) -->
+                <path d="M 60 25 Q 90 70 160 90 L 190 90 Q 120 70 85 25 Z" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5" />
+                <text id="svg-thermal-txt" x="100" y="55" fill="#fbbf24" font-size="9" font-weight="bold">فصل حراري</text>
+
+                <!-- منطقة الفصل المغناطيسي (Magnetic Trip) متغيرة حسب المنحنى -->
+                <polygon id="svg-mag-zone" points="180,90 240,90 240,150 180,150" fill="rgba(16, 185, 129, 0.3)" stroke="#10b981" stroke-width="1.5" />
+                <text id="svg-mag-text" x="210" y="125" fill="#34d399" font-size="8" font-weight="bold" text-anchor="middle">فصل لحظي</text>
+
+                <!-- نقطة تيار القصر الفعلي التشغيلية (Operating Point) -->
+                <circle id="svg-point" cx="260" cy="145" r="4.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.5" />
+                <line id="svg-point-line" x1="260" y1="20" x2="260" y2="150" stroke="#ef4444" stroke-dasharray="3,3" stroke-width="1" />
+                <text id="svg-point-label" x="265" y="40" fill="#f87171" font-size="8" font-weight="bold">Isc: 1,280A</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- زر إضافة لمشروع المنزل في تيار القصر -->
+          <button onclick="addShortCircuitToProject()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow transition-all">
+            <span>➕</span>
+            <span id="btn-add-sc-proj">إضافة لمشروع المنزل</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ================= 4. واجهة دليل معايير الإضاءة ================= -->
+      <div id="view-standards" class="space-y-4 hidden">
+        <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 flex items-start gap-3">
+          <div class="p-2 bg-amber-500/20 rounded-full text-amber-400 text-base">📖</div>
+          <div class="text-xs text-amber-200/90 leading-relaxed" id="txt-standards-banner">
+            <!-- نص ديناميكي -->
+          </div>
+        </div>
+
+        <div class="space-y-2" id="standards-list-container">
+          <!-- يتم تعبئتها ديناميكياً بحسب اللغة -->
+        </div>
+      </div>
+
+      <!-- ================= 5. واجهة مشروع المنزل (موحدة وشاملة) ================= -->
+      <div id="view-project" class="space-y-4 hidden">
+        
+        <!-- بطاقة الإحصائيات الإجمالية للمشروع -->
+        <div class="bg-gradient-to-br from-amber-500/20 via-slate-800 to-slate-900 border border-amber-500/40 rounded-2xl p-4 space-y-3 shadow-xl">
+          <div class="flex items-center justify-between border-b border-amber-500/20 pb-2">
+            <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+              <span>🏠</span> <span id="txt-proj-summary-title">الملخص الإجمالي لمشروع المنزل</span>
+            </span>
+            <span id="proj-rooms-badge" class="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold">1 Unified Item</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-right">
+            <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-proj-area">إجمالي المساحة</span>
+              <span id="proj-total-area" class="text-sm font-bold text-purple-400">20.0 m²</span>
+            </div>
+            <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-proj-load">إجمالي الحمل</span>
+              <span id="proj-total-watt" class="text-sm font-bold text-pink-400">90 W</span>
+            </div>
+            <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-proj-cables">الدوائر والكابلات</span>
+              <span id="proj-total-cables" class="text-sm font-bold text-blue-400">1 كابل (25 mm²)</span>
+            </div>
+            <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 block" id="lbl-proj-breakers">القواطع والحماية</span>
+              <span id="proj-total-breakers" class="text-sm font-bold text-emerald-400">1 قاطع (63A Curve C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- زر تحميل تقرير PDF بالإنجليزية فقط للمشروع -->
+        <button onclick="openPdfModal('project')" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
+          <span class="text-base">📄</span>
+          <span>Download English Project Report (PDF)</span>
+        </button>
+
+        <!-- قائمة عناصر المشروع الموحدة -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-slate-300" id="lbl-proj-items-title">عناصر ودوائر المشروع المدمجة:</span>
+            <button onclick="switchMainTab(0)" class="text-[11px] text-amber-400 hover:underline" id="btn-add-more">+ إضافة أخرى</button>
+          </div>
+          
+          <!-- بطاقات المشروع التفاعلية الموحدة -->
+          <div id="project-items-container" class="space-y-3">
+            <!-- يتم تعبئتها ديناميكياً بواسطة JavaScript -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- شريط التنقل السفلي (Bottom Navigation Bar) -->
+    <div class="bg-slate-950 border-t border-slate-800 px-3 py-2 flex justify-around items-center select-none">
+      <button id="nav-0" onclick="switchMainTab(0)" class="flex flex-col items-center gap-1 text-amber-400">
+        <span class="text-lg">🧮</span>
+        <span class="text-[10px] font-semibold" id="txt-nav-calc">الحاسبة</span>
+      </button>
+      <button id="nav-1" onclick="switchMainTab(1)" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+        <span class="text-lg">📖</span>
+        <span class="text-[10px] font-semibold" id="txt-nav-guide">دليل معايير الإضاءة</span>
+      </button>
+      <button id="nav-2" onclick="switchMainTab(2)" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 relative">
+        <span class="text-lg">🏠</span>
+        <span class="text-[10px] font-semibold" id="txt-nav-proj">مشروع المنزل</span>
+        <span id="nav-proj-badge" class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[9px] font-bold px-1.5 py-0.2 rounded-full">1</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ================= نافذة معاينة تقرير الـ PDF الإنجليزية فقط (100% English PDF Modal) ================= -->
+  <div id="pdf-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden" dir="ltr">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden en-font">
+      
+      <!-- ترويسة نافذة الـ PDF -->
+      <div class="bg-slate-950 px-5 py-3 border-b border-slate-800 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-red-400 text-lg">📄</span>
+          <div>
+            <span class="text-sm font-bold text-white block">LUMCAL APP • Engineering Report Preview</span>
+            <span class="text-[10px] text-slate-400">IEC 60364 & CIBSE Standards • by BOUGHABA ABDESSAMIE</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="downloadPdfSimulated()" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow transition-all">
+            <span>⬇️</span>
+            <span>Download PDF</span>
+          </button>
+          <button onclick="closePdfModal()" class="text-slate-400 hover:text-white p-1 rounded-lg text-lg">✕</button>
+        </div>
+      </div>
+
+      <!-- صفحة الـ PDF البيضاء التفاعلية (A4 Simulation - 100% English) -->
+      <div class="flex-1 overflow-y-auto p-4 bg-slate-800/80 flex justify-center">
+        <div class="bg-white text-slate-900 rounded-lg shadow-2xl p-6 w-full max-w-xl text-xs space-y-4 leading-normal select-text">
+          
+          <!-- ترويسة تقرير الـ PDF الرسمية بالإنجليزية -->
+          <div class="border-b-2 border-amber-600 pb-3 flex justify-between items-end">
+            <div>
+              <h2 class="text-base font-extrabold text-amber-800 tracking-tight">LUMCAL APP - UNIFIED ELECTRICAL & LIGHTING REPORT</h2>
+              <p class="text-[10px] font-semibold text-amber-600 tracking-wider">by BOUGHABA ABDESSAMIE</p>
+            </div>
+            <div class="text-right">
+              <span class="text-[9px] text-slate-500 block">Date: 2026-09-20 15:50</span>
+              <span class="text-[8px] text-slate-400 block">Standards: IEC 60364-5-52 / CIBSE / IEC 60898-1</span>
+            </div>
+          </div>
+
+          <!-- جدول المشروع الموحد بالإنجليزية -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-[10px] font-bold text-blue-900">
+              <span>UNIFIED PROJECT SCHEDULE (LIGHTING, CABLE & PROTECTION)</span>
+              <span class="text-slate-500 text-[8.5px]">Project: Residential Installation</span>
+            </div>
+            <table class="w-full text-left border-collapse border border-slate-300 text-[8px]" id="pdf-unified-table">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700">
+                  <th class="border border-slate-300 p-1">Circuit / Room</th>
+                  <th class="border border-slate-300 p-1">Lighting Design</th>
+                  <th class="border border-slate-300 p-1">Cable Sizing (IEC)</th>
+                  <th class="border border-slate-300 p-1">Protection (MCB)</th>
+                </tr>
+              </thead>
+              <tbody id="pdf-unified-tbody">
+                <tr>
+                  <td class="border border-slate-300 p-1 font-bold text-slate-800">Living Room (غرفة المعيشة)</td>
+                  <td class="border border-slate-300 p-1">20 m² • 200 Lux<br>10 Bulbs (90 W)</td>
+                  <td class="border border-slate-300 p-1 font-semibold text-blue-800">25 mm² Cu/XLPE<br>Ib: 76.4A • Iz: 105A • ΔV: 1.76%</td>
+                  <td class="border border-slate-300 p-1 font-semibold text-emerald-800">63A Curve C<br>Isc min: 1,280A (Trip OK ✔)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- تذييل الصفحة بالإنجليزية -->
+          <div class="border-t border-slate-200 pt-2 flex justify-between items-center text-[7.5px] text-slate-500">
+            <span>LUMCAL APP • Developed by BOUGHABA ABDESSAMIE</span>
+            <span>Page 1 of 1</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- أزرار الإجراءات السفلية للنافذة -->
+      <div class="bg-slate-950 px-5 py-3 border-t border-slate-800 flex justify-between items-center">
+        <span class="text-xs text-slate-400">Pristine English PDF Document • Ready to print or export</span>
+        <div class="flex gap-2">
+          <button onclick="closePdfModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl">Close</button>
+          <button onclick="downloadPdfSimulated()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-1.5 rounded-xl flex items-center gap-1 shadow">
+            <span>💾</span>
+            <span>Save PDF</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript تفاعلي شامل لترجمة كل عنصر 100% بحسب اللغة المختارة -->
+  <script>
+    let currentLang = 'ar'; // 'ar' or 'en'
+    let currentMainTab = 0;
+    let currentCalcTab = 0;
+
+    // قاموس الترجمة الشامل (100% Arabic & 100% English)
+    const translations = {
+      ar: {
+        headerDesc: 'الحاسبة الهندسية المتكاملة: <span class="text-amber-300 font-semibold">الإضاءة</span> • <span class="text-blue-400 font-semibold">مقاطع الكابلات</span> • <span class="text-emerald-400 font-semibold">تيار القصر والفصل</span>',
+        tabLight: 'الإضاءة',
+        tabCable: 'مقطع الكابل',
+        tabSc: 'تيار القصر والفصل',
+        navCalc: 'الحاسبة',
+        navGuide: 'دليل معايير الإضاءة',
+        navProj: 'مشروع المنزل',
+        lightBanner: 'أدخل أبعاد الغرفة وشدة الإضاءة لحساب عدد اللمبات واستهلاك الطاقة واقتراح السلك والقاطع المناسب.',
+        roomName: 'اسم الدائرة / الفراغ:',
+        length: 'الطول (متر):',
+        width: 'العرض (متر):',
+        luxReq: 'شدة الإضاءة المطلوبة (Lux):',
+        lumen: 'لومين اللمبة (lm):',
+        watt: 'قدرة اللمبة (Watt):',
+        lightResTitle: 'نتائج حساب الإضاءة',
+        area: 'المساحة',
+        totalLumens: 'إجمالي اللومين',
+        bulbsCount: 'عدد اللمبات',
+        totalWatt: 'الاستهلاك الإجمالي',
+        wireRec: 'توصية السلك والقاطع',
+        btnSyncCable: 'حساب الكابل ⬅',
+        btnAddLightProj: 'إضافة لمشروع المنزل',
+        cableBanner: 'حساب مقاطع الكابلات وفق معايير <strong>IEC 60364-5-52</strong> الدقيقة، مع الأخذ بالاعتبار نوع العزل، طريقة التمديد، والحرارة والتجاور.',
+        cName: 'اسم الدائرة / الفراغ (لربطه بالمشروع):',
+        cPhase: 'نظام الأطوار:',
+        cVolt: 'الجهد (Voltage V):',
+        cLoad: 'قيمة الحمل:',
+        cLoadType: 'نوع الحمل:',
+        cPf: 'معامل القدرة (cos φ):',
+        cLen: 'طول الكابل (متر):',
+        cMat: 'مادة الموصل:',
+        cIns: 'نوع العزل:',
+        cMethod: 'طريقة التمديد (Installation Method):',
+        cTemp: 'الحرارة (°C):',
+        cGroup: 'التجاور (دوائر):',
+        cDeltaV: 'أقصى ΔV (%):',
+        cKSummary: 'معامل التصحيح الكلي:',
+        cResTitle: 'التوصية الهندسية للمقطع',
+        cRecSec: 'المقطع المعتمد الموصى به:',
+        cSecSub: 'يحقق كفاءة التحمل الحراري والأمان لهبوط الجهد معاً',
+        cIb: 'تيار التصميم (Ib)',
+        cMinS: 'أدنى مقطع لهبوط الجهد (Min S)',
+        cIz: 'سعة تحمل الكابل (Iz)',
+        cBreaker: 'القاطع المناسب',
+        cDrop: 'هبوط الجهد الفعلي (Actual ΔV)',
+        btnAddCableProj: 'إضافة لمشروع المنزل',
+        btnToSc: 'فحص القصر ⬅',
+        scBanner: 'حساب تيار القصر الأقصى والأدنى ($I_{sc}$)، التحقق من التحمل الحراري للكابل ($S \ge S_{min}$)، واختيار منحنى الفصل المناسب (**Curve B, C, D, K, Z**).',
+        scName: 'اسم الدائرة / الفراغ (لربطه بالمشروع):',
+        scPhase: 'المنظومة الكهربائية:',
+        scSource: 'تيار قصر المنبع (Isc source):',
+        scSec: 'مقطع الكابل (mm²):',
+        scLen: 'طول الكابل (متر):',
+        scMatIns: 'مادة الموصل والعزل:',
+        scTime: 'زمن فصل القاطع (t):',
+        scCbTitle: 'مواصفات القاطع الكهربائي (Circuit Breaker):',
+        scIn: 'التيار الاسمي للقاطع (In):',
+        scCurve: 'منحنى الفصل (Tripping Curve):',
+        scResTitle: 'نتائج فحص تيار القصر والفصل',
+        scMax: 'أقصى تيار قصر (Isc max)',
+        scMin: 'أدنى تيار قصر (Isc min)',
+        scSmin: 'التحمل الحراري (Min S req)',
+        scLmax: 'أقصى طول مسموح (L max)',
+        scMagTitle: 'حالة الفصل المغناطيسي اللحظي',
+        scCurveChart: 'منحنى الفصل (Time-Current Curve):',
+        btnAddScProj: 'إضافة لمشروع المنزل',
+        standardsBanner: '<strong>دليل معايير الإضاءة:</strong> المرجع الهندسي الدولي لمستويات الإضاءة (CIBSE / EN 12464) ودرجات حرارة الألوان (Kelvin).',
+        projSummaryTitle: 'الملخص الإجمالي لمشروع المنزل',
+        projArea: 'إجمالي المساحة',
+        projLoad: 'إجمالي الحمل',
+        projCables: 'الدوائر والكابلات',
+        projBreakers: 'القواطع والحماية',
+        projItemsTitle: 'عناصر ودوائر المشروع المدمجة:',
+        btnAddMore: '+ إضافة أخرى',
+        svgThermal: 'فصل حراري',
+        svgMag: 'فصل لحظي'
+      },
+      en: {
+        headerDesc: 'Unified Engineering Suite: <span class="text-amber-300 font-semibold">Lighting</span> • <span class="text-blue-400 font-semibold">Cable Sizing (IEC)</span> • <span class="text-emerald-400 font-semibold">Short-Circuit & Protection</span>',
+        tabLight: 'Lighting',
+        tabCable: 'Cable Sizing',
+        tabSc: 'Short-Circuit & CB',
+        navCalc: 'Calculator',
+        navGuide: 'Lighting Standards',
+        navProj: 'Home Project',
+        lightBanner: 'Enter room dimensions and target illuminance to calculate bulb count, power consumption, and recommended wiring.',
+        roomName: 'Circuit / Room Name:',
+        length: 'Length (m):',
+        width: 'Width (m):',
+        luxReq: 'Required Illuminance (Lux):',
+        lumen: 'Bulb Lumens (lm):',
+        watt: 'Bulb Wattage (W):',
+        lightResTitle: 'Lighting Calculation Results',
+        area: 'Room Area',
+        totalLumens: 'Total Lumens',
+        bulbsCount: 'Bulb Count',
+        totalWatt: 'Total Load',
+        wireRec: 'Recommended Wire & Breaker',
+        btnSyncCable: 'Size Cable ⬅',
+        btnAddLightProj: 'Add to Home Project',
+        cableBanner: 'Precise cable sizing per <strong>IEC 60364-5-52</strong>, factoring in insulation type, installation method, ambient/soil temperature, and grouping.',
+        cName: 'Circuit / Feeder Name (for project):',
+        cPhase: 'Phase System:',
+        cVolt: 'Voltage (V):',
+        cLoad: 'Load Value:',
+        cLoadType: 'Load Type:',
+        cPf: 'Power Factor (cos φ):',
+        cLen: 'Cable Length (m):',
+        cMat: 'Conductor Material:',
+        cIns: 'Insulation Type:',
+        cMethod: 'Installation Method:',
+        cTemp: 'Temperature (°C):',
+        cGroup: 'Grouping (Circuits):',
+        cDeltaV: 'Max ΔV (%):',
+        cKSummary: 'Total Correction Factor:',
+        cResTitle: 'Recommended Cable Cross-Section',
+        cRecSec: 'Recommended Standard Section:',
+        cSecSub: 'Satisfies both thermal ampacity and voltage drop criteria',
+        cIb: 'Design Current (Ib)',
+        cMinS: 'Min Section for ΔV (Min S)',
+        cIz: 'Cable Ampacity (Iz)',
+        cBreaker: 'Recommended Breaker',
+        cDrop: 'Actual Voltage Drop (ΔV)',
+        btnAddCableProj: 'Add to Home Project',
+        btnToSc: 'Check Short-Circuit ⬅',
+        scBanner: 'Calculate maximum & minimum short-circuit currents ($I_{sc}$), verify cable thermal withstand ($S \ge S_{min}$), and select tripping curve (**Curve B, C, D, K, Z**).',
+        scName: 'Circuit / Feeder Name (for project):',
+        scPhase: 'Electrical System:',
+        scSource: 'Upstream Fault Current (Isc source):',
+        scSec: 'Cable Section (mm²):',
+        scLen: 'Cable Length (m):',
+        scMatIns: 'Conductor & Insulation:',
+        scTime: 'Clearing Time (t):',
+        scCbTitle: 'Circuit Breaker Specifications:',
+        scIn: 'Rated Current (In):',
+        scCurve: 'Tripping Curve:',
+        scResTitle: 'Short-Circuit & Protection Results',
+        scMax: 'Max Fault Current (Isc max)',
+        scMin: 'Min Fault Current (Isc min)',
+        scSmin: 'Thermal Withstand (Min S req)',
+        scLmax: 'Max Permissible Length (L max)',
+        scMagTitle: 'Instantaneous Magnetic Trip Status',
+        scCurveChart: 'Tripping Curve (Time-Current Curve):',
+        btnAddScProj: 'Add to Home Project',
+        standardsBanner: '<strong>Lighting Standards Guide:</strong> International recommended illuminance levels (CIBSE / EN 12464) and color temperatures (Kelvin).',
+        projSummaryTitle: 'Unified Home Project Summary',
+        projArea: 'Total Area',
+        projLoad: 'Total Load',
+        projCables: 'Circuits & Cables',
+        projBreakers: 'Protection & Breakers',
+        projItemsTitle: 'Unified Project Circuits & Elements:',
+        btnAddMore: '+ Add Another',
+        svgThermal: 'Thermal Trip',
+        svgMag: 'Magnetic Trip'
+      }
+    };
+
+    // بنية بيانات المشروع الموحد
+    let projectItems = {};
+
+    // جدول الكابلات القياسي
+    const cableDataset = [
+      { section: 1.5, cuPvc1: 17.5, cuPvc3: 15.5, alPvc1: 13.5, alPvc3: 12.0, cuXlpe1: 22.0, cuXlpe3: 19.5, alXlpe1: 17.0, alXlpe3: 15.0 },
+      { section: 2.5, cuPvc1: 24.0, cuPvc3: 21.0, alPvc1: 18.5, alPvc3: 16.5, cuXlpe1: 30.0, cuXlpe3: 26.0, alXlpe1: 23.0, alXlpe3: 20.0 },
+      { section: 4.0, cuPvc1: 32.0, cuPvc3: 28.0, alPvc1: 25.0, alPvc3: 22.0, cuXlpe1: 40.0, cuXlpe3: 35.0, alXlpe1: 31.0, alXlpe3: 27.0 },
+      { section: 6.0, cuPvc1: 41.0, cuPvc3: 36.0, alPvc1: 32.0, alPvc3: 28.0, cuXlpe1: 51.0, cuXlpe3: 44.0, alXlpe1: 39.0, alXlpe3: 34.0 },
+      { section: 10.0, cuPvc1: 57.0, cuPvc3: 50.0, alPvc1: 44.0, alPvc3: 39.0, cuXlpe1: 70.0, cuXlpe3: 60.0, alXlpe1: 54.0, alXlpe3: 47.0 },
+      { section: 16.0, cuPvc1: 76.0, cuPvc3: 68.0, alPvc1: 60.0, alPvc3: 53.0, cuXlpe1: 94.0, cuXlpe3: 80.0, alXlpe1: 73.0, alXlpe3: 62.0 },
+      { section: 25.0, cuPvc1: 101.0, cuPvc3: 89.0, alPvc1: 79.0, alPvc3: 70.0, cuXlpe1: 119.0, cuXlpe3: 105.0, alXlpe1: 92.0, alXlpe3: 82.0 },
+      { section: 35.0, cuPvc1: 125.0, cuPvc3: 110.0, alPvc1: 97.0, alPvc3: 86.0, cuXlpe1: 148.0, cuXlpe3: 128.0, alXlpe1: 115.0, alXlpe3: 100.0 },
+      { section: 50.0, cuPvc1: 151.0, cuPvc3: 134.0, alPvc1: 118.0, alPvc3: 104.0, cuXlpe1: 180.0, cuXlpe3: 154.0, alXlpe1: 140.0, alXlpe3: 119.0 },
+      { section: 70.0, cuPvc1: 192.0, cuPvc3: 171.0, alPvc1: 150.0, alPvc3: 133.0, cuXlpe1: 232.0, cuXlpe3: 194.0, alXlpe1: 179.0, alXlpe3: 152.0 },
+      { section: 95.0, cuPvc1: 232.0, cuPvc3: 207.0, alPvc1: 181.0, alPvc3: 161.0, cuXlpe1: 282.0, cuXlpe3: 233.0, alXlpe1: 217.0, alXlpe3: 182.0 },
+      { section: 120.0, cuPvc1: 269.0, cuPvc3: 239.0, alPvc1: 210.0, alPvc3: 186.0, cuXlpe1: 328.0, cuXlpe3: 268.0, alXlpe1: 252.0, alXlpe3: 210.0 },
+      { section: 150.0, cuPvc1: 300.0, cuPvc3: 262.0, alPvc1: 234.0, alPvc3: 204.0, cuXlpe1: 379.0, cuXlpe3: 300.0, alXlpe1: 290.0, alXlpe3: 240.0 },
+      { section: 185.0, cuPvc1: 341.0, cuPvc3: 296.0, alPvc1: 266.0, alPvc3: 231.0, cuXlpe1: 434.0, cuXlpe3: 340.0, alXlpe1: 332.0, alXlpe3: 273.0 },
+      { section: 240.0, cuPvc1: 400.0, cuPvc3: 346.0, alPvc1: 312.0, alPvc3: 270.0, cuXlpe1: 514.0, cuXlpe3: 398.0, alXlpe1: 397.0, alXlpe3: 321.0 }
+    ];
+
+    function toggleLanguage() {
+      setLanguage(currentLang === 'ar' ? 'en' : 'ar');
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const isAr = lang === 'ar';
+      const t = translations[lang];
+
+      document.getElementById('html-root').setAttribute('dir', isAr ? 'rtl' : 'ltr');
+      document.getElementById('html-root').setAttribute('lang', lang);
+
+      // تحديث أزرار التبديل
+      document.getElementById('btn-lang-ar').className = isAr 
+        ? "px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shadow font-bold" 
+        : "px-2.5 py-1 rounded-lg text-slate-300 hover:text-white";
+      document.getElementById('btn-lang-en').className = !isAr 
+        ? "px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shadow font-bold" 
+        : "px-2.5 py-1 rounded-lg text-slate-300 hover:text-white";
+
+      document.getElementById('app-lang-toggle-text').innerText = isAr ? 'EN' : 'عربي';
+
+      // ترجمة كافة العناصر الثابتة
+      document.getElementById('header-desc').innerHTML = t.headerDesc;
+      document.getElementById('txt-tab-light').innerText = t.tabLight;
+      document.getElementById('txt-tab-cable').innerText = t.tabCable;
+      document.getElementById('txt-tab-sc').innerText = t.tabSc;
+
+      document.getElementById('txt-nav-calc').innerText = t.navCalc;
+      document.getElementById('txt-nav-guide').innerText = t.navGuide;
+      document.getElementById('txt-nav-proj').innerText = t.navProj;
+
+      document.getElementById('txt-light-banner').innerText = t.lightBanner;
+      document.getElementById('lbl-room-name').innerText = t.roomName;
+      document.getElementById('lbl-len').innerText = t.length;
+      document.getElementById('lbl-wid').innerText = t.width;
+      document.getElementById('lbl-lux').innerText = t.luxReq;
+      document.getElementById('lbl-lumen').innerText = t.lumen;
+      document.getElementById('lbl-watt').innerText = t.watt;
+      document.getElementById('txt-light-res-title').innerText = t.lightResTitle;
+      document.getElementById('lbl-res-area').innerText = t.area;
+      document.getElementById('lbl-res-lumens').innerText = t.totalLumens;
+      document.getElementById('lbl-res-bulbs').innerText = t.bulbsCount;
+      document.getElementById('lbl-res-watt').innerText = t.totalWatt;
+      document.getElementById('lbl-wire-rec').innerText = t.wireRec;
+      document.getElementById('btn-sync-cable').innerText = t.btnSyncCable;
+      document.getElementById('btn-add-light-proj').innerText = t.btnAddLightProj;
+
+      document.getElementById('txt-cable-banner').innerHTML = t.cableBanner;
+      document.getElementById('lbl-c-name').innerText = t.cName;
+      document.getElementById('lbl-c-phase').innerText = t.cPhase;
+      document.getElementById('lbl-c-volt').innerText = t.cVolt;
+      document.getElementById('lbl-c-load').innerText = t.cLoad;
+      document.getElementById('lbl-c-loadtype').innerText = t.cLoadType;
+      document.getElementById('lbl-c-pf').innerText = t.cPf;
+      document.getElementById('lbl-c-len').innerText = t.cLen;
+      document.getElementById('lbl-c-mat').innerText = t.cMat;
+      document.getElementById('lbl-c-ins').innerText = t.cIns;
+      document.getElementById('lbl-c-method').innerText = t.cMethod;
+      document.getElementById('lbl-c-group').innerText = t.cGroup;
+      document.getElementById('lbl-c-deltav').innerText = t.cDeltaV;
+      document.getElementById('lbl-c-k-summary').innerText = t.cKSummary;
+      document.getElementById('txt-c-res-title').innerText = t.cResTitle;
+      document.getElementById('lbl-c-rec-sec').innerText = t.cRecSec;
+      document.getElementById('txt-c-sec-sub').innerText = t.cSecSub;
+      document.getElementById('lbl-c-ib').innerText = t.cIb;
+      document.getElementById('lbl-c-mins').innerText = t.cMinS;
+      document.getElementById('lbl-c-iz').innerText = t.cIz;
+      document.getElementById('lbl-c-breaker').innerText = t.cBreaker;
+      document.getElementById('lbl-c-drop').innerText = t.cDrop;
+      document.getElementById('btn-add-cable-proj').innerText = t.btnAddCableProj;
+      document.getElementById('btn-to-sc').innerText = t.btnToSc;
+
+      document.getElementById('txt-sc-banner').innerHTML = t.scBanner;
+      document.getElementById('lbl-sc-name').innerText = t.scName;
+      document.getElementById('lbl-sc-phase').innerText = t.scPhase;
+      document.getElementById('lbl-sc-source').innerText = t.scSource;
+      document.getElementById('lbl-sc-sec').innerText = t.scSec;
+      document.getElementById('lbl-sc-len').innerText = t.scLen;
+      document.getElementById('lbl-sc-matins').innerText = t.scMatIns;
+      document.getElementById('lbl-sc-time').innerText = t.scTime;
+      document.getElementById('lbl-sc-cb-title').innerText = t.scCbTitle;
+      document.getElementById('lbl-sc-in').innerText = t.scIn;
+      document.getElementById('lbl-sc-curve').innerText = t.scCurve;
+      document.getElementById('txt-sc-res-title').innerText = t.scResTitle;
+      document.getElementById('lbl-sc-max').innerText = t.scMax;
+      document.getElementById('lbl-sc-min').innerText = t.scMin;
+      document.getElementById('lbl-sc-smin').innerText = t.scSmin;
+      document.getElementById('lbl-sc-lmax').innerText = t.scLmax;
+      document.getElementById('lbl-sc-mag-title').innerText = t.scMagTitle;
+      document.getElementById('lbl-sc-curve-chart').innerText = t.scCurveChart;
+      document.getElementById('btn-add-sc-proj').innerText = t.btnAddScProj;
+
+      document.getElementById('standardsBanner')?.remove;
+      document.getElementById('txt-standards-banner').innerHTML = t.standardsBanner;
+      document.getElementById('txt-proj-summary-title').innerText = t.projSummaryTitle;
+      document.getElementById('lbl-proj-area').innerText = t.projArea;
+      document.getElementById('lbl-proj-load').innerText = t.projLoad;
+      document.getElementById('lbl-proj-cables').innerText = t.projCables;
+      document.getElementById('lbl-proj-breakers').innerText = t.projBreakers;
+      document.getElementById('lbl-proj-items-title').innerText = t.projItemsTitle;
+      document.getElementById('btn-add-more').innerText = t.btnAddMore;
+
+      document.getElementById('svg-thermal-txt').textContent = t.svgThermal;
+      document.getElementById('svg-mag-text').textContent = t.svgMag;
+
+      // تحديث النصوص التوضيحية للحقول (Placeholders)
+      document.getElementById('l-room-name').placeholder = isAr ? 'اسم الغرفة / الفراغ (مثال: صالة أو نوم)' : 'Room / Space Name (e.g. Living or Bedroom)';
+      document.getElementById('l-len').placeholder = isAr ? 'مثال: 5.0' : 'e.g. 5.0';
+      document.getElementById('l-wid').placeholder = isAr ? 'مثال: 4.0' : 'e.g. 4.0';
+      document.getElementById('l-lumen').placeholder = isAr ? 'مثال: 806' : 'e.g. 806';
+      document.getElementById('l-watt').placeholder = isAr ? 'مثال: 9' : 'e.g. 9';
+
+      document.getElementById('c-name').placeholder = isAr ? 'اسم الدائرة أو الفراغ (مثال: اللوحة الرئيسية)' : 'Circuit or Feeder Name (e.g. Main Panel)';
+      document.getElementById('c-volt').placeholder = '400';
+      document.getElementById('c-load').placeholder = isAr ? 'مثال: 45' : 'e.g. 45';
+      document.getElementById('c-pf').placeholder = '0.85';
+      document.getElementById('c-len').placeholder = isAr ? 'مثال: 85' : 'e.g. 85';
+
+      document.getElementById('sc-name').placeholder = isAr ? 'اسم الدائرة أو الفراغ' : 'Circuit or Space Name';
+      document.getElementById('sc-source').placeholder = '15';
+      document.getElementById('sc-len').placeholder = isAr ? 'مثال: 50' : 'e.g. 50';
+
+      document.getElementById('svg-thermal-txt').textContent = t.svgThermal;
+      document.getElementById('svg-mag-text').textContent = t.svgMag;
+
+      // تحديث خيارات القوائم المنسدلة
+      updateDropdownOptions(isAr);
+      renderStandardsList(isAr);
+
+      // إعادة الحساب باللغة الجديدة
+      calculateLighting();
+      calculateCable();
+      calculateShortCircuit();
+      renderProjectCards();
+    }
+
+    function updateDropdownOptions(isAr) {
+      // 1. غرف الإنارة
+      const roomPreset = document.getElementById('l-room-preset');
+      const curRoom = roomPreset.value;
+      roomPreset.innerHTML = isAr ? `
+        <option value="" disabled selected>— اختر نوع الغرفة (اختياري) —</option>
+        <option value="غرفة المعيشة" data-lux="200">معيشة (200 Lux)</option>
+        <option value="غرفة النوم" data-lux="150">نوم (150 Lux)</option>
+        <option value="المطبخ" data-lux="350">مطبخ (350 Lux)</option>
+        <option value="المكتب" data-lux="400">مكتب (400 Lux)</option>
+        <option value="الحمام" data-lux="200">حمام (200 Lux)</option>
+      ` : `
+        <option value="" disabled selected>— Select Room Type (Optional) —</option>
+        <option value="Living Room" data-lux="200">Living Room (200 Lux)</option>
+        <option value="Bedroom" data-lux="150">Bedroom (150 Lux)</option>
+        <option value="Kitchen" data-lux="350">Kitchen (350 Lux)</option>
+        <option value="Office" data-lux="400">Office (400 Lux)</option>
+        <option value="Bathroom" data-lux="200">Bathroom (200 Lux)</option>
+      `;
+
+      // 2. مادة الموصل
+      document.getElementById('opt-c-cu').text = isAr ? 'نحاس (Copper - Cu)' : 'Copper (Cu)';
+      document.getElementById('opt-c-al').text = isAr ? 'ألمنيوم (Aluminum - Al)' : 'Aluminum (Al)';
+
+      // 3. طريقة التمديد
+      const cMethod = document.getElementById('c-method');
+      const curMethod = cMethod.value;
+      cMethod.innerHTML = isAr ? `
+        <option value="In Conduit / Trunking" selected>داخل مجرى/مواسير في الهواء (Method B1/B2)</option>
+        <option value="Direct Buried in Ground">مدفون مباشرة في الأرض (Method D2)</option>
+        <option value="Underground Duct">داخل مجرى تحت الأرض (Method D1)</option>
+        <option value="Perforated Cable Tray">على حامل كابلات مثقب في الهواء (Method E/F)</option>
+        <option value="Surface Mounted">مثبت مباشرة على الجدار/السطح (Method C)</option>
+      ` : `
+        <option value="In Conduit / Trunking" selected>In Conduit / Trunking in Air (Method B1/B2)</option>
+        <option value="Direct Buried in Ground">Direct Buried in Ground (Method D2)</option>
+        <option value="Underground Duct">In Underground Duct (Method D1)</option>
+        <option value="Perforated Cable Tray">On Perforated Cable Tray (Method E/F)</option>
+        <option value="Surface Mounted">Surface Mounted on Wall (Method C)</option>
+      `;
+      cMethod.value = curMethod;
+
+      // 4. التجاور
+      document.getElementById('opt-grp-1').text = isAr ? 'دائرة 1 (منفرد)' : '1 Circuit (Single)';
+      document.getElementById('opt-grp-2').text = isAr ? 'دائرتان (2)' : '2 Circuits';
+      document.getElementById('opt-grp-3').text = isAr ? '3 دوائر' : '3 Circuits';
+      document.getElementById('opt-grp-4').text = isAr ? '4 دوائر' : '4 Circuits';
+      document.getElementById('opt-grp-6').text = isAr ? '6+ دوائر' : '6+ Circuits';
+
+      // 5. مادة وعزل تيار القصر
+      document.getElementById('opt-sc-cuxlpe').text = isAr ? 'نحاس / XLPE (k = 143)' : 'Copper / XLPE (k = 143)';
+      document.getElementById('opt-sc-cupvc').text = isAr ? 'نحاس / PVC (k = 115)' : 'Copper / PVC (k = 115)';
+      document.getElementById('opt-sc-alxlpe').text = isAr ? 'ألمنيوم / XLPE (k = 94)' : 'Aluminum / XLPE (k = 94)';
+      document.getElementById('opt-sc-alpvc').text = isAr ? 'ألمنيوم / PVC (k = 76)' : 'Aluminum / PVC (k = 76)';
+
+      // 6. زمن الفصل
+      document.getElementById('opt-t-004').text = isAr ? '0.04s (فصل لحظي سريع)' : '0.04s (Fast Instantaneous)';
+      document.getElementById('opt-t-010').text = isAr ? '0.10s (معياري MCB)' : '0.10s (Standard MCB)';
+      document.getElementById('opt-t-020').text = isAr ? '0.20s (MCCB مع تأخير)' : '0.20s (MCCB Delayed)';
+      document.getElementById('opt-t-040').text = isAr ? '0.40s (الحد الأقصى IEC)' : '0.40s (Max IEC Limit)';
+
+      // 7. المنحنيات
+      document.getElementById('opt-crv-b').text = isAr ? 'منحنى B (3 - 5 In)' : 'Curve B (3 - 5 In)';
+      document.getElementById('opt-crv-c').text = isAr ? 'منحنى C (5 - 10 In)' : 'Curve C (5 - 10 In)';
+      document.getElementById('opt-crv-d').text = isAr ? 'منحنى D (10 - 20 In)' : 'Curve D (10 - 20 In)';
+      document.getElementById('opt-crv-k').text = isAr ? 'منحنى K (8 - 12 In)' : 'Curve K (8 - 12 In)';
+      document.getElementById('opt-crv-z').text = isAr ? 'منحنى Z (2 - 3 In)' : 'Curve Z (2 - 3 In)';
+    }
+
+    function renderStandardsList(isAr) {
+      const container = document.getElementById('standards-list-container');
+      const items = isAr ? [
+        { name: 'غرفة النوم (Bedrooms)', k: '2700K - 3000K (أبيض دافئ مريح للعين)', lux: '150 Lux' },
+        { name: 'غرفة المعيشة (Living Room)', k: '3000K - 4000K (أبيض دافئ ناعم)', lux: '200 Lux' },
+        { name: 'المطبخ (Kitchen)', k: '4000K (أبيض محايد لرؤية واضحة)', lux: '350 Lux' },
+        { name: 'المكتب والدراسة (Home Office)', k: '4000K - 5000K (ضوء نهاري للتركيز)', lux: '400 Lux' },
+        { name: 'الحمامات (Bathrooms)', k: '3000K - 4000K', lux: '200 Lux' }
+      ] : [
+        { name: 'Bedrooms', k: '2700K - 3000K (Warm White for comfort)', lux: '150 Lux' },
+        { name: 'Living Room', k: '3000K - 4000K (Comfortable Warm White)', lux: '200 Lux' },
+        { name: 'Kitchen', k: '4000K (Neutral White for clear vision)', lux: '350 Lux' },
+        { name: 'Home Office & Study', k: '4000K - 5000K (Daylight for focus)', lux: '400 Lux' },
+        { name: 'Bathrooms', k: '3000K - 4000K', lux: '200 Lux' }
+      ];
+
+      container.innerHTML = items.map(item => `
+        <div class="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+          <div>
+            <span class="font-bold text-xs text-white block">${item.name}</span>
+            <span class="text-[10px] text-slate-400">${item.k}</span>
+          </div>
+          <span class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">${item.lux}</span>
+        </div>
+      `).join('');
+    }
+
+    // إدارة تبويبات الواجهة
+    function switchMainTab(index) {
+      currentMainTab = index;
+      document.getElementById('view-lighting').classList.toggle('hidden', index !== 0 || currentCalcTab !== 0);
+      document.getElementById('view-cable').classList.toggle('hidden', index !== 0 || currentCalcTab !== 1);
+      document.getElementById('view-short-circuit').classList.toggle('hidden', index !== 0 || currentCalcTab !== 2);
+      document.getElementById('view-standards').classList.toggle('hidden', index !== 1);
+      document.getElementById('view-project').classList.toggle('hidden', index !== 2);
+      document.getElementById('top-switcher-container').style.display = (index === 0) ? 'block' : 'none';
+
+      for (let i = 0; i < 3; i++) {
+        const btn = document.getElementById(`nav-${i}`);
+        if (i === index) {
+          btn.className = "flex flex-col items-center gap-1 text-amber-400";
+        } else {
+          btn.className = "flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 relative";
+        }
+      }
+
+      if (index === 2) {
+        renderProjectCards();
+      }
+    }
+
+    function switchCalcInterface(index) {
+      currentCalcTab = index;
+      document.getElementById('view-lighting').classList.toggle('hidden', index !== 0);
+      document.getElementById('view-cable').classList.toggle('hidden', index !== 1);
+      document.getElementById('view-short-circuit').classList.toggle('hidden', index !== 2);
+
+      const btnLight = document.getElementById('tab-light');
+      const btnCable = document.getElementById('tab-cable');
+      const btnSc = document.getElementById('tab-sc');
+
+      btnLight.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-300 hover:text-white";
+      btnCable.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-300 hover:text-white";
+      btnSc.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-300 hover:text-white";
+
+      if (index === 0) {
+        btnLight.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 bg-amber-500 text-slate-950 shadow-md font-bold";
+      } else if (index === 1) {
+        btnCable.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 bg-blue-600 text-white shadow-md font-bold";
+      } else {
+        btnSc.className = "flex-1 py-1.5 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1 bg-emerald-600 text-white shadow-md font-bold";
+        calculateShortCircuit();
+      }
+    }
+
+    // إضافة الإنارة للمشروع
+    function addLightingToProject() {
+      const name = document.getElementById('l-room-name').value.trim() || (currentLang === 'ar' ? 'دائرة الإنارة' : 'Lighting Circuit');
+      const area = parseFloat(document.getElementById('res-area').innerText) || 20.0;
+      const lux = parseFloat(document.getElementById('l-lux').value) || 200;
+      const bulbs = parseInt(document.getElementById('res-bulbs').innerText) || 10;
+      const watt = parseFloat(document.getElementById('res-watt').innerText) || 90;
+
+      if (!projectItems[name]) {
+        projectItems[name] = { name: name };
+      }
+      projectItems[name].lighting = { area, lux, bulbs, watt };
+
+      document.getElementById('c-name').value = name;
+      document.getElementById('sc-name').value = name;
+
+      alert(currentLang === 'ar' 
+        ? `تمت إضافة إضاءة [${name}] بنجاح إلى مشروع المنزل!` 
+        : `Lighting for [${name}] added to Home Project successfully!`);
+      switchMainTab(2);
+    }
+
+    // إضافة الكابل للمشروع
+    function addCableToProject() {
+      const name = document.getElementById('c-name').value.trim() || (currentLang === 'ar' ? 'كابل التغذية' : 'Main Feeder');
+      const sec = parseFloat(document.getElementById('c-res-sec').innerText) || 25;
+      const mat = document.getElementById('c-mat').value;
+      const ins = document.getElementById('c-insulation').value;
+      const ib = parseFloat(document.getElementById('c-res-ib').innerText) || 76.42;
+      const iz = parseFloat(document.getElementById('c-res-iz').innerText) || 105.0;
+      const deltaV = parseFloat(document.getElementById('c-res-drop').innerText) || 1.76;
+      const breaker = parseInt(document.getElementById('c-res-breaker').innerText) || 80;
+
+      if (!projectItems[name]) {
+        projectItems[name] = { name: name };
+      }
+      projectItems[name].cable = { section: sec, mat, ins, ib, iz, deltaV, breaker };
+
+      document.getElementById('sc-name').value = name;
+
+      alert(currentLang === 'ar' 
+        ? `تم ربط كابل [${name}] (${sec} mm²) بنجاح في مشروع المنزل!` 
+        : `Cable for [${name}] (${sec} mm²) attached to Home Project successfully!`);
+      switchMainTab(2);
+    }
+
+    // إضافة تيار القصر للمشروع
+    function addShortCircuitToProject() {
+      const name = document.getElementById('sc-name').value.trim() || (currentLang === 'ar' ? 'حماية الدائرة' : 'Circuit Protection');
+      const inVal = parseFloat(document.getElementById('sc-in').value) || 63;
+      const curve = document.getElementById('sc-curve').value;
+      const iscMin = parseFloat(document.getElementById('sc-res-min').innerText.replace(/,/g, '')) || 1280;
+      const iscMax = parseFloat(document.getElementById('sc-res-max').innerText) || 12.4;
+      const isTripOk = iscMin >= (inVal * (curve === 'B' ? 5 : (curve === 'C' ? 10 : 20)));
+
+      if (!projectItems[name]) {
+        projectItems[name] = { name: name };
+      }
+      projectItems[name].protection = { inVal, curve, iscMin, iscMax, isTripOk };
+
+      alert(currentLang === 'ar' 
+        ? `تم ربط قاطع وحماية [${name}] (${inVal}A Curve ${curve}) بنجاح في مشروع المنزل!` 
+        : `Protection for [${name}] (${inVal}A Curve ${curve}) attached to Home Project successfully!`);
+      switchMainTab(2);
+    }
+
+    // عرض بطاقات المشروع الموحدة
+    function renderProjectCards() {
+      const container = document.getElementById('project-items-container');
+      const isAr = currentLang === 'ar';
+      container.innerHTML = '';
+
+      const keys = Object.keys(projectItems);
+      document.getElementById('proj-rooms-badge').innerText = `${keys.length} ${isAr ? 'عناصر موحدة' : 'Unified Items'}`;
+      document.getElementById('nav-proj-badge').innerText = keys.length.toString();
+
+      let totalArea = 0;
+      let totalWatt = 0;
+      let cableCount = 0;
+      let breakerCount = 0;
+
+      keys.forEach((key, index) => {
+        const item = projectItems[key];
+        let hasLight = !!item.lighting;
+        let hasCable = !!item.cable;
+        let hasProt = !!item.protection;
+
+        if (hasLight) {
+          totalArea += item.lighting.area;
+          totalWatt += item.lighting.watt;
+        }
+        if (hasCable) cableCount++;
+        if (hasProt) breakerCount++;
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-800/80 rounded-2xl border border-slate-700/80 p-3.5 space-y-2.5 shadow-md";
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-slate-700/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-amber-400 font-extrabold text-xs">#${index + 1}</span>
+              <span class="font-bold text-xs text-white">${item.name}</span>
+            </div>
+            <div class="flex gap-1">
+              ${hasLight ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">💡 ' + (isAr ? 'إنارة' : 'Lighting') + '</span>' : ''}
+              ${hasCable ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">⚡ ' + (isAr ? 'كابل' : 'Cable') + '</span>' : ''}
+              ${hasProt ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">🛡️ ' + (isAr ? 'قاطع' : 'Breaker') + '</span>' : ''}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px]">
+            ${hasLight ? `
+              <div class="bg-slate-900/80 p-2 rounded-xl border border-amber-500/20">
+                <span class="text-[10px] text-amber-400 font-bold block mb-1">💡 ${isAr ? 'تصميم الإنارة' : 'Lighting'}:</span>
+                <div class="text-slate-300 space-y-0.5 text-[10px]">
+                  <div>${isAr ? 'المساحة' : 'Area'}: <strong class="text-white">${item.lighting.area} m²</strong> (${item.lighting.lux} Lux)</div>
+                  <div>${isAr ? 'اللمبات' : 'Bulbs'}: <strong class="text-white">${item.lighting.bulbs} Qty</strong> (${item.lighting.watt} W)</div>
+                </div>
+              </div>` : ''}
+
+            ${hasCable ? `
+              <div class="bg-slate-900/80 p-2 rounded-xl border border-blue-500/20">
+                <span class="text-[10px] text-blue-400 font-bold block mb-1">⚡ ${isAr ? 'مقطع الكابل (IEC)' : 'Cable (IEC)'}:</span>
+                <div class="text-slate-300 space-y-0.5 text-[10px]">
+                  <div>${isAr ? 'المقطع' : 'Section'}: <strong class="text-emerald-400">${item.cable.section} mm²</strong> (${item.cable.mat}/${item.cable.ins})</div>
+                  <div>Ib: <strong class="text-white">${item.cable.ib}A</strong> • Iz: <strong class="text-white">${item.cable.iz}A</strong> • ΔV: <strong class="text-white">${item.cable.deltaV}%</strong></div>
+                </div>
+              </div>` : ''}
+
+            ${hasProt ? `
+              <div class="bg-slate-900/80 p-2 rounded-xl border border-emerald-500/20">
+                <span class="text-[10px] text-emerald-400 font-bold block mb-1">🛡️ ${isAr ? 'القاطع وتيار القصر' : 'Protection'}:</span>
+                <div class="text-slate-300 space-y-0.5 text-[10px]">
+                  <div>${isAr ? 'القاطع' : 'Breaker'}: <strong class="text-amber-400">${item.protection.inVal}A Curve ${item.protection.curve}</strong></div>
+                  <div>Isc min: <strong class="text-white">${item.protection.iscMin} A</strong> (${item.protection.isTripOk ? '✔ ' + (isAr ? 'فصل آمن' : 'Trip OK') : '⚠️'})</div>
+                </div>
+              </div>` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('proj-total-area').innerText = `${totalArea.toFixed(1)} m²`;
+      document.getElementById('proj-total-watt').innerText = `${totalWatt} W`;
+      document.getElementById('proj-total-cables').innerText = `${cableCount} ${isAr ? 'دوائر' : 'Circuits'}`;
+      document.getElementById('proj-total-breakers').innerText = `${breakerCount} ${isAr ? 'قواطع' : 'Breakers'}`;
+    }
+
+    // 1. حساب الإنارة
+    function calculateLighting() {
+      const len = parseFloat(document.getElementById('l-len').value) || 0;
+      const wid = parseFloat(document.getElementById('l-wid').value) || 0;
+      const lux = parseFloat(document.getElementById('l-lux').value) || 200;
+      const lumen = parseFloat(document.getElementById('l-lumen').value) || 806;
+      const watt = parseFloat(document.getElementById('l-watt').value) || 9;
+
+      const area = len * wid;
+      const totalLumens = area * lux * 2.0;
+      const nominal = lumen > 0 ? totalLumens / lumen : 0;
+      const practical = Math.ceil(nominal);
+      const totalWatt = practical * watt;
+
+      document.getElementById('res-area').innerText = `${area.toFixed(1)} m²`;
+      document.getElementById('res-lumens').innerText = `${Math.round(totalLumens).toLocaleString()} lm`;
+      document.getElementById('res-bulbs').innerText = `${practical} ${currentLang === 'ar' ? 'لمبات' : 'Bulbs'}`;
+      document.getElementById('res-watt').innerText = `${totalWatt} ${currentLang === 'ar' ? 'واط' : 'W'}`;
+
+      const wireSec = totalWatt > 1500 ? "2.5" : "1.5";
+      const breaker = totalWatt > 1500 ? "16A" : "10A";
+      document.getElementById('res-wire-info').innerText = currentLang === 'ar' 
+        ? `سلك: ${wireSec} mm² Cu / PVC • قاطع: ${breaker} MCB`
+        : `Wire: ${wireSec} mm² Cu / PVC • Breaker: ${breaker} MCB`;
+    }
+
+    function onRoomPresetChange() {
+      const select = document.getElementById('l-room-preset');
+      const lux = select.options[select.selectedIndex].getAttribute('data-lux');
+      document.getElementById('l-room-name').value = select.value;
+      document.getElementById('l-lux').value = lux;
+      document.getElementById('lux-val').innerText = lux + ' Lux';
+      calculateLighting();
+    }
+
+    function onLuxSliderChange() {
+      const lux = document.getElementById('l-lux').value;
+      document.getElementById('lux-val').innerText = lux + ' Lux';
+      calculateLighting();
+    }
+
+    function prefillCableFromLighting() {
+      const watt = parseFloat(document.getElementById('res-watt').innerText) || 90;
+      const name = document.getElementById('l-room-name').value;
+      document.getElementById('c-name').value = name;
+      document.getElementById('c-phase').value = "1-Phase";
+      document.getElementById('c-volt').value = "230";
+      document.getElementById('c-load').value = (watt / 1000).toFixed(3);
+      document.getElementById('c-loadtype').value = "kW";
+      document.getElementById('c-pf').value = "0.90";
+      document.getElementById('c-len').value = "25";
+      document.getElementById('c-mat').value = "Copper";
+      document.getElementById('c-insulation').value = "PVC";
+      document.getElementById('c-method').value = "In Conduit / Trunking";
+      document.getElementById('c-deltav').value = "3";
+      switchCalcInterface(1);
+      calculateCable();
+    }
+
+    function onMethodChange() {
+      const method = document.getElementById('c-method').value;
+      const isBuried = method.includes('Buried') || method.includes('Duct');
+      document.getElementById('c-temp-label').innerText = isBuried 
+        ? (currentLang === 'ar' ? 'حرارة التربة (°C)' : 'Soil Temp (°C)')
+        : (currentLang === 'ar' ? 'حرارة المحيط (°C)' : 'Ambient Temp (°C)');
+      if (isBuried) {
+        document.getElementById('c-temp').value = "20";
+      } else {
+        document.getElementById('c-temp').value = "30";
+      }
+      calculateCable();
+    }
+
+    // 2. حساب الكابلات والأسلاك وفق معايير IEC 60364-5-52
+    function calculateCable() {
+      const phase = document.getElementById('c-phase').value;
+      const is1Ph = phase === "1-Phase";
+      const volt = parseFloat(document.getElementById('c-volt').value) || 400;
+      const load = parseFloat(document.getElementById('c-load').value) || 45;
+      const loadType = document.getElementById('c-loadtype').value;
+      const pf = parseFloat(document.getElementById('c-pf').value) || 0.85;
+      const len = parseFloat(document.getElementById('c-len').value) || 85;
+      const mat = document.getElementById('c-mat').value;
+      const isCu = mat === "Copper";
+      const insulation = document.getElementById('c-insulation').value;
+      const isXlpe = insulation === "XLPE";
+      const method = document.getElementById('c-method').value;
+      const temp = parseFloat(document.getElementById('c-temp').value) || 30;
+      const grouping = parseInt(document.getElementById('c-group').value) || 1;
+      const maxDeltaVPct = parseFloat(document.getElementById('c-deltav').value) || 3;
+
+      const isBuried = method.includes('Buried') || method.includes('Duct');
+      let kTemp = 1.0;
+      if (isBuried) {
+        if (isXlpe) {
+          if (temp <= 10) kTemp = 1.07;
+          else if (temp <= 15) kTemp = 1.04;
+          else if (temp <= 20) kTemp = 1.00;
+          else if (temp <= 25) kTemp = 0.96;
+          else if (temp <= 30) kTemp = 0.93;
+          else if (temp <= 35) kTemp = 0.89;
+          else kTemp = 0.85;
+        } else {
+          if (temp <= 10) kTemp = 1.10;
+          else if (temp <= 15) kTemp = 1.05;
+          else if (temp <= 20) kTemp = 1.00;
+          else if (temp <= 25) kTemp = 0.95;
+          else if (temp <= 30) kTemp = 0.89;
+          else if (temp <= 35) kTemp = 0.84;
+          else kTemp = 0.77;
+        }
+      } else {
+        if (isXlpe) {
+          if (temp <= 25) kTemp = 1.04;
+          else if (temp <= 30) kTemp = 1.00;
+          else if (temp <= 35) kTemp = 0.96;
+          else if (temp <= 40) kTemp = 0.91;
+          else if (temp <= 45) kTemp = 0.87;
+          else if (temp <= 50) kTemp = 0.82;
+          else kTemp = 0.76;
+        } else {
+          if (temp <= 25) kTemp = 1.06;
+          else if (temp <= 30) kTemp = 1.00;
+          else if (temp <= 35) kTemp = 0.94;
+          else if (temp <= 40) kTemp = 0.87;
+          else if (temp <= 45) kTemp = 0.79;
+          else if (temp <= 50) kTemp = 0.71;
+          else kTemp = 0.61;
+        }
+      }
+
+      let kGroup = 1.0;
+      if (grouping === 2) kGroup = 0.80;
+      else if (grouping === 3) kGroup = 0.70;
+      else if (grouping === 4) kGroup = 0.65;
+      else if (grouping === 5) kGroup = 0.60;
+      else if (grouping >= 6) kGroup = 0.55;
+
+      const totalK = (kTemp * kGroup);
+      document.getElementById('c-k-calc-desc').innerText = `K_temp (${kTemp.toFixed(2)}) × K_group (${kGroup.toFixed(2)}) = ${totalK.toFixed(2)}`;
+      document.getElementById('c-k-badge').innerText = `K = ${totalK.toFixed(2)}`;
+
+      let ib = 0;
+      if (loadType === "Amps") {
+        ib = load;
+      } else if (loadType === "kW") {
+        ib = is1Ph ? (load * 1000) / (volt * pf) : (load * 1000) / (volt * pf * Math.sqrt(3));
+      } else {
+        ib = is1Ph ? (load * 1000) / volt : (load * 1000) / (volt * Math.sqrt(3));
+      }
+
+      const requiredIz = ib / totalK;
+      const gamma = isCu ? 56.0 : 35.0;
+
+      const maxDeltaVLimit = volt * (maxDeltaVPct / 100);
+      let minS = 0;
+      if (is1Ph) {
+        minS = (2 * len * ib) / (gamma * maxDeltaVLimit);
+      } else {
+        minS = (Math.sqrt(3) * len * ib * pf) / (gamma * maxDeltaVLimit);
+      }
+
+      let methodFactor = 1.0;
+      if (method.includes('Direct Buried')) methodFactor = 1.18;
+      else if (method.includes('Duct')) methodFactor = 1.05;
+      else if (method.includes('Tray') || method.includes('Air')) methodFactor = 1.12;
+      else if (method.includes('Surface')) methodFactor = 1.06;
+
+      let selected = null;
+      let rawCap = 0;
+      for (let row of cableDataset) {
+        let cap = 0;
+        if (isCu) {
+          if (isXlpe) cap = is1Ph ? row.cuXlpe1 : row.cuXlpe3;
+          else cap = is1Ph ? row.cuPvc1 : row.cuPvc3;
+        } else {
+          if (isXlpe) cap = is1Ph ? row.alXlpe1 : row.alXlpe3;
+          else cap = is1Ph ? row.alPvc1 : row.alPvc3;
+        }
+
+        cap = cap * methodFactor;
+
+        if (cap >= requiredIz && row.section >= minS) {
+          selected = row;
+          rawCap = cap;
+          break;
+        }
+      }
+
+      if (selected) {
+        const finalIz = rawCap * totalK;
+        let actualDeltaV = 0;
+        if (is1Ph) {
+          actualDeltaV = (2 * len * ib) / (gamma * selected.section);
+        } else {
+          actualDeltaV = (Math.sqrt(3) * len * ib * pf) / (gamma * selected.section);
+        }
+        const actualDeltaVPct = (actualDeltaV / volt) * 100;
+
+        const breakers = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630];
+        let breaker = 630;
+        for (let b of breakers) {
+          if (b >= ib) { breaker = b; break; }
+        }
+
+        document.getElementById('c-res-sec').innerText = `${selected.section} mm²`;
+        document.getElementById('c-res-spec').innerText = `${mat} / ${insulation} (${isXlpe ? "90°C" : "70°C"})`;
+        document.getElementById('c-res-ib').innerText = `${ib.toFixed(2)} A`;
+        document.getElementById('c-res-mins').innerText = `${minS.toFixed(2)} mm²`;
+        document.getElementById('c-res-iz').innerText = `${finalIz.toFixed(2)} A`;
+        document.getElementById('c-res-iz-sub').innerText = `Raw: ${rawCap.toFixed(1)}A × K: ${totalK.toFixed(2)}`;
+        document.getElementById('c-res-breaker').innerText = `${breaker} A`;
+        document.getElementById('c-res-drop').innerText = `${actualDeltaVPct.toFixed(2)} % (${actualDeltaV.toFixed(2)} V)`;
+        document.getElementById('c-res-drop-max').innerText = `Max limit: ${maxDeltaVPct.toFixed(2)}% (${maxDeltaVLimit.toFixed(2)} V)`;
+
+        document.getElementById('sc-sec').value = selected.section.toString();
+        document.getElementById('sc-len').value = len.toString();
+        document.getElementById('sc-in').value = breaker.toString();
+        document.getElementById('sc-mat-ins').value = `${isCu ? 'Cu' : 'Al'}-${isXlpe ? 'XLPE' : 'PVC'}`;
+      }
+    }
+
+    // 3. حساب تيار القصر ومنحنيات الفصل
+    function calculateShortCircuit() {
+      const phase = document.getElementById('sc-phase').value;
+      const is3Ph = phase === "3-Phase";
+      const un = is3Ph ? 400.0 : 230.0;
+      const uph = 230.0;
+      const iscSourceKa = parseFloat(document.getElementById('sc-source').value) || 15.0;
+      const section = parseFloat(document.getElementById('sc-sec').value) || 25.0;
+      const length = parseFloat(document.getElementById('sc-len').value) || 50.0;
+      const matIns = document.getElementById('sc-mat-ins').value;
+      const time = parseFloat(document.getElementById('sc-time').value) || 0.10;
+      const inVal = parseFloat(document.getElementById('sc-in').value) || 63.0;
+      const curve = document.getElementById('sc-curve').value;
+
+      const isCu = matIns.startsWith('Cu');
+      const isXlpe = matIns.endsWith('XLPE');
+      const rhoHot = isCu ? 0.0225 : 0.036;
+
+      let kFactor = 143;
+      if (isCu && !isXlpe) kFactor = 115;
+      else if (!isCu && isXlpe) kFactor = 94;
+      else if (!isCu && !isXlpe) kFactor = 76;
+
+      const iscSourceA = iscSourceKa * 1000.0;
+      const zUpstream = (un / (Math.sqrt(3) * iscSourceA));
+      const rCable = (rhoHot * length) / section;
+      const iscMaxKa = iscSourceKa;
+
+      const totalRmin = (2.0 * rCable) + zUpstream;
+      const iscMinA = (0.8 * uph) / totalRmin;
+
+      const sMinReq = (Math.sqrt(Math.pow(iscSourceA, 2) * time)) / (kFactor * 10.0);
+      const isThermallyProtected = section >= sMinReq;
+
+      let magMinMul = 5.0;
+      let magMaxMul = 10.0;
+      let curveDesc = "";
+      if (curve === "B") {
+        magMinMul = 3.0; magMaxMul = 5.0;
+        curveDesc = currentLang === 'ar'
+          ? "منحنى B (3 إلى 5 In): مخصص للإنارة، الخطوط الطويلة جداً، والتطبيقات بدون تيارات إقلاع."
+          : "Curve B (3 to 5 In): Ideal for lighting circuits, long cable runs, and circuits without inrush current.";
+      } else if (curve === "C") {
+        magMinMul = 5.0; magMaxMul = 10.0;
+        curveDesc = currentLang === 'ar'
+          ? "منحنى C (5 إلى 10 In): المنحنى القياسي الأكثر انتشاراً للأحمال المنزلية والتجارية والمقابس."
+          : "Curve C (5 to 10 In): Standard general curve for domestic/commercial loads, sockets, and standard lighting.";
+      } else if (curve === "D") {
+        magMinMul = 10.0; magMaxMul = 20.0;
+        curveDesc = currentLang === 'ar'
+          ? "منحنى D (10 إلى 20 In): مخصص للأحمال ذات تيار بدء مرتفع مثل المحركات والمحولات الكبيرة."
+          : "Curve D (10 to 20 In): Designed for high inrush currents, large motors, transformers, and industrial gear.";
+      } else if (curve === "K") {
+        magMinMul = 8.0; magMaxMul = 12.0;
+        curveDesc = currentLang === 'ar'
+          ? "منحنى K (8 إلى 12 In): لحماية المحركات مع تيار بدء مرتفع دون التعرض للفصل الخاطئ."
+          : "Curve K (8 to 12 In): Designed for motor protection with high starting surge without nuisance tripping.";
+      } else if (curve === "Z") {
+        magMinMul = 2.0; magMaxMul = 3.0;
+        curveDesc = currentLang === 'ar'
+          ? "منحنى Z (2 إلى 3 In): شديد الحساسية لحماية الدوائر الإلكترونية الحساسة وشبه الموصلات."
+          : "Curve Z (2 to 3 In): High sensitivity for protecting sensitive semiconductors and electronic controls.";
+      }
+
+      const imagMin = inVal * magMinMul;
+      const imagMax = inVal * magMaxMul;
+      const isInstantaneousOk = iscMinA >= imagMax;
+      const lMaxMeters = (0.8 * uph * section) / (2.0 * rhoHot * imagMax);
+
+      document.getElementById('sc-res-max').innerText = `${iscMaxKa.toFixed(1)} kA`;
+      document.getElementById('sc-res-min').innerText = `${Math.round(iscMinA).toLocaleString()} A`;
+      document.getElementById('sc-res-smin').innerText = `${sMinReq.toFixed(2)} mm²`;
+      document.getElementById('sc-res-lmax').innerText = `${Math.round(lMaxMeters)} ${currentLang === 'ar' ? 'متر' : 'm'}`;
+      document.getElementById('sc-curve-desc').innerHTML = `<strong>${curveDesc}</strong>`;
+      document.getElementById('sc-curve-tag').innerText = `Curve ${curve} (${inVal}A)`;
+
+      const thermalBadge = document.getElementById('sc-thermal-badge');
+      if (isThermallyProtected) {
+        thermalBadge.innerText = currentLang === 'ar' ? `الكابل محمي حرارياً ✔ (${section} ≥ ${sMinReq.toFixed(1)} mm²)` : `Thermally Protected ✔ (${section} ≥ ${sMinReq.toFixed(1)} mm²)`;
+        thermalBadge.className = "text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30";
+      } else {
+        thermalBadge.innerText = currentLang === 'ar' ? `تحذير: مقطع الكابل ضعيف حرارياً!` : `Warning: Thermal Limit Exceeded!`;
+        thermalBadge.className = "text-[10px] font-bold text-red-300 bg-red-500/20 px-2.5 py-0.5 rounded-full border border-red-500/30";
+      }
+
+      const magCard = document.getElementById('sc-mag-status-card');
+      const magBadge = document.getElementById('sc-mag-badge');
+      const magText = document.getElementById('sc-mag-text');
+      if (isInstantaneousOk) {
+        magCard.className = "bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1";
+        magBadge.innerText = currentLang === 'ar' ? "فصل لحظي آمن (t ≤ 0.1s) ✔" : "Instantaneous Trip OK ✔";
+        magBadge.className = "text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30";
+        magText.innerText = currentLang === 'ar' 
+          ? `تيار القصر الأدنى (${Math.round(iscMinA)} A) يتجاوز عتبة القاطع المغناطيسية (${Math.round(imagMax)} A). سيتم عزل الخط لحظياً وبأمان كامل.`
+          : `Minimum fault current (${Math.round(iscMinA)}A) exceeds magnetic threshold (${Math.round(imagMax)}A). Safe instantaneous trip guaranteed.`;
+      } else {
+        magCard.className = "bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-1";
+        magBadge.innerText = currentLang === 'ar' ? "تحذير: لا يضمن فصلاً لحظياً ⚠️" : "Warning: No Instantaneous Trip ⚠️";
+        magBadge.className = "text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30";
+        magText.innerText = currentLang === 'ar' 
+          ? `تيار القصر الأدنى (${Math.round(iscMinA)} A) أقل من عتبة المنحنى (${Math.round(imagMax)} A)! قد يفصل القاطع بتأخير حراري.`
+          : `Minimum fault current is below magnetic trip threshold. Risk of delayed thermal trip.`;
+      }
+
+      updateSvgCurve(curve, inVal, iscMinA, imagMin, imagMax);
+    }
+
+    function updateSvgCurve(curve, inVal, iscMinA, imagMin, imagMax) {
+      let xStart = 180;
+      let xEnd = 240;
+
+      if (curve === "B") { xStart = 120; xEnd = 180; }
+      else if (curve === "C") { xStart = 180; xEnd = 240; }
+      else if (curve === "D") { xStart = 240; xEnd = 300; }
+      else if (curve === "K") { xStart = 210; xEnd = 260; }
+      else if (curve === "Z") { xStart = 90; xEnd = 120; }
+
+      const zone = document.getElementById('svg-mag-zone');
+      if (zone) {
+        zone.setAttribute('points', `${xStart},90 ${xEnd},90 ${xEnd},150 ${xStart},150`);
+      }
+
+      const text = document.getElementById('svg-mag-text');
+      if (text) {
+        text.setAttribute('x', ((xStart + xEnd) / 2).toString());
+        text.textContent = `Curve ${curve}`;
+      }
+
+      let dotX = 260;
+      const ratio = iscMinA / inVal;
+      if (ratio <= 1.5) dotX = 65;
+      else if (ratio <= 3.0) dotX = 110;
+      else if (ratio <= 5.0) dotX = 160;
+      else if (ratio <= 10.0) dotX = 220;
+      else if (ratio <= 20.0) dotX = 280;
+      else dotX = 320;
+
+      const pt = document.getElementById('svg-point');
+      const ptLine = document.getElementById('svg-point-line');
+      const ptLabel = document.getElementById('svg-point-label');
+      if (pt && ptLine && ptLabel) {
+        pt.setAttribute('cx', dotX.toString());
+        ptLine.setAttribute('x1', dotX.toString());
+        ptLine.setAttribute('x2', dotX.toString());
+        ptLabel.setAttribute('x', Math.min(dotX + 5, 270).toString());
+        ptLabel.textContent = `Isc: ${Math.round(iscMinA)}A`;
+      }
+    }
+
+    function onPhaseChange() {
+      const phase = document.getElementById('c-phase').value;
+      document.getElementById('c-volt').value = (phase === "1-Phase") ? "230" : "400";
+      calculateCable();
+    }
+
+    function onLoadTypeChange() {
+      const type = document.getElementById('c-loadtype').value;
+      document.getElementById('c-pf-container').style.display = (type === 'kW') ? 'block' : 'none';
+      calculateCable();
+    }
+
+    function resetCurrentView() {
+      calculateLighting();
+      calculateCable();
+      calculateShortCircuit();
+    }
+
+    function toggleAppTheme() {
+      alert(currentLang === 'ar' ? 'تبديل المظهر (فاتح / داكن)' : 'Toggle Theme Mode (Light / Dark)');
+    }
+
+    function openPdfModal(type) {
+      document.getElementById('pdf-modal').classList.remove('hidden');
+    }
+
+    function closePdfModal() {
+      document.getElementById('pdf-modal').classList.add('hidden');
+    }
+
+    function downloadPdfSimulated() {
+      alert('Downloading LUMCAL APP English engineering PDF report (CIBSE & IEC 60364 compliant)...');
+    }
+
+    // تشغيل أولي
+    setLanguage('ar');
+  </script>
+</body>
+</html>

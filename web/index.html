@@ -1,46 +1,215 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="LUMCAL APP: Professional lighting design, cable sizing (IEC 60364), and short-circuit protection calculator by BOUGHABA ABDESSAMIE.">
+  <meta name="theme-color" content="#0F172A">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="lumcal">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LUMCAL APP">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>lumcal</title>
+  <title>LUMCAL APP - by BOUGHABA ABDESSAMIE</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #0B0F17;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1E293B 0%, #0B0F17 100%);
+      z-index: 99999;
+      transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+    }
+    .logo-glow {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .logo-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #F59E0B;
+      border-right-color: #FBBF24;
+      animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    }
+    .logo-ring-pulse {
+      position: absolute;
+      width: 110%;
+      height: 110%;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.15);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35);
+    }
+    .logo-icon svg {
+      width: 28px;
+      height: 28px;
+      fill: #0B0F17;
+    }
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .brand-sub {
+      font-size: 13px;
+      color: #94A3B8;
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: 20px;
+      color: #FBBF24;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .dots span {
+      animation: blink 1.4s infinite both;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    .fallback-card {
+      display: none;
+      margin-top: 15px;
+      text-align: center;
+      max-width: 320px;
+      padding: 14px 18px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      animation: fadeIn 0.5s ease-in;
+    }
+    .fallback-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 18px;
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: #0F172A;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      transition: transform 0.2s;
+    }
+    .fallback-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.2; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+    }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      20% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="loading-container">
+    <div class="logo-glow">
+      <div class="logo-ring-pulse"></div>
+      <div class="logo-ring"></div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-2 18h4v1c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-1z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="brand-title">LUMCAL APP</div>
+    <div class="brand-sub">by BOUGHABA ABDESSAMIE</div>
+    <div class="status-badge">
+      <span>جاري تشغيل المنظومة الهندسية</span>
+      <span class="dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+    <!-- بطاقة بديلة سريعة في حال تأخر تحميل حزم WebAssembly -->
+    <div id="fallback-card" class="fallback-card">
+      <p style="font-size: 11px; color: #CBD5E1; line-height: 1.5;">
+        إذا كان اتصالك بطيئاً، يمكنك استخدام النسخة الفورية فائقة السرعة:
+      </p>
+      <a href="preview.html" class="fallback-btn">⚡ فتح النسخة الفورية (Lite Mode)</a>
+    </div>
+  </div>
+
+  <script>
+    // إظهار رابط النسخة الفورية إذا تأخر التحميل لأكثر من 5 ثوانٍ
+    setTimeout(function() {
+      var card = document.getElementById('fallback-card');
+      if (card && document.getElementById('loading-container')) {
+        card.style.display = 'block';
+      }
+    }, 5000);
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
